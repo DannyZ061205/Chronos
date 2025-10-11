@@ -8,6 +8,8 @@ export function OptionsApp() {
   const [outlookConnected, setOutlookConnected] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [openaiApiKey, setOpenaiApiKey] = useState('');
+  const [showApiKey, setShowApiKey] = useState(false);
   
   useEffect(() => {
     loadSettings();
@@ -17,6 +19,12 @@ export function OptionsApp() {
   const loadSettings = async () => {
     const settings = await getDefaults();
     setDefaults(settings);
+
+    // Load OpenAI API key
+    const result = await chrome.storage.local.get(['openaiApiKey']);
+    if (result.openaiApiKey) {
+      setOpenaiApiKey(result.openaiApiKey);
+    }
   };
   
   const checkConnectionStatus = async () => {
@@ -36,9 +44,15 @@ export function OptionsApp() {
   const handleSave = async () => {
     setSaving(true);
     setMessage('');
-    
+
     try {
       await saveDefaults(defaults);
+
+      // Save OpenAI API key
+      if (openaiApiKey.trim()) {
+        await chrome.storage.local.set({ openaiApiKey: openaiApiKey.trim() });
+      }
+
       setMessage('Settings saved successfully!');
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
@@ -316,10 +330,49 @@ export function OptionsApp() {
         </div>
       </section>
 
+      {/* API Configuration Section */}
+      <section className="card mb-6">
+        <h2 className="text-xl font-semibold mb-4">API Configuration</h2>
+
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="openaiApiKey" className="block text-sm font-medium text-gray-700 mb-2">
+              OpenAI API Key (Optional)
+            </label>
+            <div className="relative">
+              <input
+                id="openaiApiKey"
+                type={showApiKey ? "text" : "password"}
+                value={openaiApiKey}
+                onChange={(e) => setOpenaiApiKey(e.target.value)}
+                placeholder="sk-proj-..."
+                className="input w-full pr-24"
+              />
+              <button
+                type="button"
+                onClick={() => setShowApiKey(!showApiKey)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-gray-600 hover:text-gray-900 px-2 py-1"
+              >
+                {showApiKey ? "Hide" : "Show"}
+              </button>
+            </div>
+            <p className="text-sm text-gray-500 mt-1">
+              Used for advanced natural language parsing. Get your key at{" "}
+              <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                platform.openai.com
+              </a>
+            </p>
+            <p className="text-xs text-gray-400 mt-1">
+              🔒 Your API key is stored locally and never leaves your device
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Defaults Section */}
       <section className="card mb-6">
         <h2 className="text-xl font-semibold mb-4">Default Settings</h2>
-        
+
         <div className="space-y-4">
           <div>
             <label htmlFor="duration" className="block text-sm font-medium text-gray-700 mb-2">
