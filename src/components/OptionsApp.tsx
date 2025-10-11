@@ -422,9 +422,15 @@ export function OptionsApp() {
 
       {/* Footer */}
       <footer className="mt-8 text-center text-sm text-gray-500">
-        <p>Chronos v0.1.0 • Built for fast multi-calendar scheduling</p>
+        <p>Chronos v1.0.1 • Built for fast multi-calendar scheduling</p>
         <p className="mt-2 text-xs">
           🔒 Your privacy matters: All calendar data stays on your device. We never collect or transmit your personal information.
+        </p>
+        <p className="mt-4 text-xs bg-gray-100 p-2 rounded font-mono">
+          Extension ID: {chrome.runtime.id}
+        </p>
+        <p className="mt-1 text-xs text-gray-400">
+          ℹ️ Copy this ID if you need to configure OAuth in Google Cloud Console
         </p>
       </footer>
     </div>
