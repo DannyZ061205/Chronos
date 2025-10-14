@@ -106,8 +106,8 @@ We may update this policy occasionally. Changes will be posted here with a new "
 
 Questions about privacy or data handling?
 
-- **Email**: [your-support-email@example.com]
-- **GitHub Issues**: [link to your repo's issues page]
+- **Email**: Danny20061205@gmail.com
+- **GitHub Issues**: https://github.com/DannyZ061205/Chronos/issues
 
 ## Compliance
 
