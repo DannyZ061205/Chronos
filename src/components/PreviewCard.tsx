@@ -148,9 +148,9 @@ export function PreviewCard() {
   return (
     <div className="card space-y-3">
       {hasMultipleEvents && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-blue-800">
+            <span className="text-sm font-medium text-purple-800">
               📅 Event {currentEventIndex + 1} of {multipleEventDrafts.length}
             </span>
             <div className="flex gap-2">
@@ -168,22 +168,22 @@ export function PreviewCard() {
               <button
                 onClick={handlePrevious}
                 disabled={currentEventIndex === 0 || uiState === 'submitting'}
-                className="p-1 rounded hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+                className="p-1 rounded hover:bg-purple-100 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
                 aria-label="Previous event"
                 title="Previous event"
               >
-                <svg className="w-5 h-5 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
               <button
                 onClick={handleNext}
                 disabled={currentEventIndex === multipleEventDrafts.length - 1 || uiState === 'submitting'}
-                className="p-1 rounded hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+                className="p-1 rounded hover:bg-purple-100 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
                 aria-label="Next event"
                 title="Next event"
               >
-                <svg className="w-5 h-5 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
@@ -197,7 +197,7 @@ export function PreviewCard() {
         <button
           onClick={() => setUIState('editing')}
           disabled={uiState === 'submitting'}
-          className="text-blue-600 hover:text-blue-700 text-sm font-medium disabled:opacity-50"
+          className="text-purple-600 hover:text-purple-700 text-sm font-medium disabled:opacity-50"
           aria-label="Edit event details"
         >
           Edit
@@ -213,7 +213,7 @@ export function PreviewCard() {
             <p className="font-medium text-gray-900">
               {formatDate(startISO, tz)}
               {recurrenceText && (
-                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
                   <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>

@@ -258,7 +258,7 @@ export function CommandInput() {
         <button
           onClick={handleVoiceInput}
           disabled={disabled}
-          className={`absolute right-2 top-2 p-2 rounded-lg transition-all bg-blue-100 hover:bg-blue-200 text-blue-600 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`absolute right-2 top-2 p-2 rounded-lg transition-all bg-purple-100 hover:bg-purple-200 text-purple-600 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
           aria-label="Voice input (coming soon)"
           title="Voice input - Coming this winter!"
         >
@@ -272,7 +272,7 @@ export function CommandInput() {
         <button
           onClick={handleParse}
           disabled={isParsing}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+          className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
         >
           {isParsing ? (
             <>

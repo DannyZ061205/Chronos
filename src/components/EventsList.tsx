@@ -82,7 +82,7 @@ export function EventsList() {
                 e.stopPropagation();
                 loadEvents();
               }}
-              className="text-blue-600 hover:text-blue-700 text-xs"
+              className="text-purple-600 hover:text-purple-700 text-xs"
             >
               Refresh
             </button>
@@ -102,7 +102,7 @@ export function EventsList() {
         <div className="mt-2">
           {loading && (
             <div className="text-center py-4">
-              <div className="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full mx-auto" />
+              <div className="animate-spin h-6 w-6 border-2 border-purple-600 border-t-transparent rounded-full mx-auto" />
             </div>
           )}
 
@@ -141,7 +141,7 @@ export function EventsList() {
                       <div className="flex items-center gap-1 mt-1">
                         <span className={`text-xs px-2 py-0.5 rounded ${
                           event.source === 'google'
-                            ? 'bg-blue-100 text-blue-700'
+                            ? 'bg-purple-100 text-purple-700'
                             : 'bg-indigo-100 text-indigo-700'
                         }`}>
                           {event.source === 'google' ? 'Google' : 'Outlook'}

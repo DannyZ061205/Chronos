@@ -193,15 +193,15 @@ export function ModifyForm() {
     <>
       <div className="card space-y-4">
         <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-            <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+            <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
           </div>
           <div className="flex-1">
             <h3 className="text-lg font-semibold text-gray-900 mb-1">Modify Event</h3>
             {isRecurring && (
-              <div className="mb-2 text-sm text-blue-600 flex items-center gap-1">
+              <div className="mb-2 text-sm text-purple-600 flex items-center gap-1">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
@@ -222,7 +222,7 @@ export function ModifyForm() {
 
             {/* Arrow */}
             <div className="flex justify-center mb-4">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
               </svg>
             </div>
@@ -230,7 +230,7 @@ export function ModifyForm() {
             {/* Updated Event */}
             <div>
               <p className="text-xs font-medium text-gray-500 uppercase mb-2">After Changes</p>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-1">
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 space-y-1">
                 <p className="font-medium text-gray-900">{updatedEvent.title}</p>
                 <p className="text-sm text-gray-600">
                   {formatDate(updatedEvent.startISO, userTimezone)} at {formatTime(updatedEvent.startISO, userTimezone)}
@@ -244,7 +244,7 @@ export function ModifyForm() {
           <button
             onClick={handleModify}
             disabled={isModifying}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isModifying ? (
               <span className="flex items-center justify-center gap-2">

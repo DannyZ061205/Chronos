@@ -16,7 +16,7 @@ export function TargetToggles() {
             checked={targets.google}
             onChange={toggleGoogle}
             disabled={!accountStatus.google || disabled}
-            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
           />
           <span className={`text-sm ${!accountStatus.google ? 'text-gray-400' : 'text-gray-700'}`}>
             Google Calendar
@@ -32,7 +32,7 @@ export function TargetToggles() {
             checked={targets.outlook}
             onChange={toggleOutlook}
             disabled={!accountStatus.outlook || disabled}
-            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
           />
           <span className={`text-sm ${!accountStatus.outlook ? 'text-gray-400' : 'text-gray-700'}`}>
             Outlook Calendar

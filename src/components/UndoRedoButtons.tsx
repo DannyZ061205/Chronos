@@ -86,7 +86,7 @@ export function UndoRedoButtons() {
       <button
         onClick={handleUndo}
         disabled={!canUndo() || isUndoing || isRedoing}
-        className="p-1 hover:bg-blue-500 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+        className="p-1 hover:bg-purple-500 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
         title="Undo (Cmd/Ctrl+Z)"
         aria-label="Undo last action"
       >
@@ -105,7 +105,7 @@ export function UndoRedoButtons() {
       <button
         onClick={handleRedo}
         disabled={!canRedo() || isUndoing || isRedoing}
-        className="p-1 hover:bg-blue-500 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+        className="p-1 hover:bg-purple-500 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
         title="Redo (Cmd/Ctrl+Shift+Z)"
         aria-label="Redo last undone action"
       >

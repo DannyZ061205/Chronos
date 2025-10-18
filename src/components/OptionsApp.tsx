@@ -358,7 +358,7 @@ export function OptionsApp() {
             </div>
             <p className="text-sm text-gray-500 mt-1">
               Used for advanced natural language parsing. Get your key at{" "}
-              <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+              <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline">
                 platform.openai.com
               </a>
             </p>
