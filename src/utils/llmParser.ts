@@ -43,9 +43,16 @@ export async function parseLLMEvent(
 
     const systemPrompt = `You are a calendar event assistant. Detect user intent (create/delete/modify events) and extract relevant details.
 
-Current time: ${now.toISO()}
+TODAY IS: ${now.toFormat('EEEE, MMMM d, yyyy')} (${now.toFormat('EEEE')} is the current day of the week)
+Current exact time: ${now.toISO()}
 Timezone: ${tz}
 Default duration: ${defaultDurationMinutes} minutes
+
+IMPORTANT: When interpreting relative day references:
+- "today" = ${now.toFormat('EEEE, MMMM d, yyyy')}
+- "tomorrow" = ${now.plus({ days: 1 }).toFormat('EEEE, MMMM d, yyyy')}
+- "Tuesday" (or any day name) = the NEXT occurrence of that day from today
+- If today is ${now.toFormat('EEEE')}, then "Tuesday" means ${now.plus({ days: (2 - now.weekday + 7) % 7 || 7 }).toFormat('MMMM d, yyyy')}
 
 INTENT DETECTION:
 - CREATE: "add", "create", "schedule", "book", event descriptions without keywords
