@@ -11,6 +11,7 @@ import { EventsList } from './EventsList';
 import { DeleteConfirmation } from './DeleteConfirmation';
 import { ModifyForm } from './ModifyForm';
 import { UndoRedoButtons } from './UndoRedoButtons';
+import { TimeConfirmation } from './TimeConfirmation';
 
 export function PopupApp() {
   const { setAccountStatus, uiState } = usePopupStore();
@@ -74,6 +75,9 @@ export function PopupApp() {
       <div className="p-4 space-y-4">
         {/* Command Input */}
         <CommandInput />
+
+        {/* Time Confirmation */}
+        {uiState === 'time_confirmation' && <TimeConfirmation />}
 
         {/* Delete Confirmation */}
         {uiState === 'delete_confirm' && <DeleteConfirmation />}

@@ -9,6 +9,7 @@ export interface EventDraft {
   tz: Tz;
   description?: string; // Event description/notes
   recurrence?: string; // RRULE string for recurring events
+  needsTimeConfirmation?: boolean; // True if user didn't provide specific time
 }
 
 // Command intent types
@@ -183,7 +184,8 @@ export type UIState =
   | 'partial'
   | 'error'
   | 'delete_confirm'
-  | 'modify_form';
+  | 'modify_form'
+  | 'time_confirmation'; // Ask user for specific time when not provided
 
 export interface ToastMessage {
   type: 'success' | 'error' | 'info';

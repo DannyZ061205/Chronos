@@ -66,12 +66,16 @@ MULTIPLE EVENTS:
 
 RULES FOR EVENT CREATION:
 1. Title: Extract ONLY the event name (e.g., "Go to gym", "ChatGPT EDU 101 Training - In-Person")
-2. Description: Create BRIEF bullet-point style reminders of KEY details only
+2. Time Detection: If the user does NOT provide a specific time (like "3pm", "at 10:00", "noon"), set "needsTimeConfirmation": true
+   - Examples that NEED time: "go to gym tomorrow", "meeting on Friday", "dinner next week"
+   - Examples that DON'T need time: "gym at 6am", "meeting Friday 3pm", "dinner next week at 7pm"
+   - When needsTimeConfirmation is true, use current time as placeholder but flag it for confirmation
+3. Description: Create BRIEF bullet-point style reminders of KEY details only
    - Extract: Things to bring, locations (Zoom links, room numbers), topics to discuss, important notes
    - Format: Short phrases like "Bring: X, Y" or "Venue: Zoom link" or "Location: Lecture Hall 1"
    - EXCLUDE: All timing/scheduling words ("everyday", "starting tomorrow", "at 6am", etc.)
    - Keep it SHORT - think "quick glance reminders", not full sentences
-3. Recurrence: Support ADVANCED recurrence patterns:
+4. Recurrence: Support ADVANCED recurrence patterns:
    - Simple: "daily"/"everyday" → "DAILY", "weekly" → "WEEKLY", "monthly" → "MONTHLY", "yearly" → "YEARLY"
    - Weekends: "weekends"/"weekend" → "WEEKLY;BYDAY=SA,SU"
    - Weekdays: "weekdays"/"weekday" → "WEEKLY;BYDAY=MO,TU,WE,TH,FR"
@@ -95,6 +99,7 @@ FOR SINGLE CREATE:
   "durationMinutes": number,
   "description": "brief key details only",
   "recurrencePattern": "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY" | "WEEKLY;BYDAY=SA,SU" | "WEEKLY;BYDAY=MO,TU,WE,TH,FR" | "WEEKLY;INTERVAL=2" | "DAILY;INTERVAL=3" | null,
+  "needsTimeConfirmation": true | false,
   "confidence": number
 }
 
@@ -131,9 +136,13 @@ FOR MODIFY:
 
 Examples:
 
-SINGLE CREATE - Simple recurrence:
+SINGLE CREATE - Simple recurrence WITH time:
 Input: "go to gym everyday starting from tomorrow at 6am"
-Output: {"intent": "create", "title": "Go to gym", "startDateTime": "2025-10-05T06:00:00.000+04:00", "durationMinutes": 60, "description": "", "recurrencePattern": "DAILY", "confidence": 0.95}
+Output: {"intent": "create", "title": "Go to gym", "startDateTime": "2025-10-05T06:00:00.000+04:00", "durationMinutes": 60, "description": "", "recurrencePattern": "DAILY", "needsTimeConfirmation": false, "confidence": 0.95}
+
+SINGLE CREATE - WITHOUT specific time (needs confirmation):
+Input: "go to gym tomorrow"
+Output: {"intent": "create", "title": "Go to gym", "startDateTime": "2025-10-05T${now.toFormat('HH:mm:ss')}", "durationMinutes": 60, "description": "", "recurrencePattern": null, "needsTimeConfirmation": true, "confidence": 0.95}
 
 SINGLE CREATE - Weekends:
 Input: "go to gym 6am during weekends"
@@ -284,6 +293,7 @@ CRITICAL:
           tz,
           description: hasDescription ? event.description.trim() : undefined,
           recurrence: rrule,
+          needsTimeConfirmation: event.needsTimeConfirmation || false,
         };
       });
 
@@ -324,6 +334,7 @@ CRITICAL:
       tz,
       description: hasDescription ? parsed.description.trim() : undefined,
       recurrence: rrule,
+      needsTimeConfirmation: parsed.needsTimeConfirmation || false,
     };
 
     console.log('LLM Parser - Final draft:', draft);

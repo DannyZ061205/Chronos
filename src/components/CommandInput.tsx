@@ -80,7 +80,12 @@ export function CommandInput() {
         // Handle different intents
         if (result.intent.intent === 'create') {
           setEventDraft(result.intent.draft);
-          setUIState('preview');
+          // Check if time confirmation is needed
+          if (result.intent.draft.needsTimeConfirmation) {
+            setUIState('time_confirmation');
+          } else {
+            setUIState('preview');
+          }
         } else if (result.intent.intent === 'create_multiple') {
           // Handle multiple events - show first event in preview
           const drafts = result.intent.drafts;
