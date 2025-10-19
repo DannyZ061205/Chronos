@@ -42,7 +42,28 @@ export function EventsList() {
     }
   };
 
-  const handleDelete = async (event: CalendarEvent) => {
+  const handleEventClick = (event: CalendarEvent) => {
+    // Extract date from the event's startISO
+    const eventDate = new Date(event.startISO);
+    const year = eventDate.getFullYear();
+    const month = eventDate.getMonth() + 1; // Months are 0-indexed
+    const day = eventDate.getDate();
+
+    let url: string;
+
+    if (event.source === 'google') {
+      // Google Calendar URL format: https://calendar.google.com/calendar/u/0/r/day/YYYY/MM/DD
+      url = `https://calendar.google.com/calendar/u/0/r/day/${year}/${month}/${day}`;
+    } else {
+      // Outlook Calendar URL format: https://outlook.office.com/calendar/view/day/YYYY/MM/DD
+      url = `https://outlook.office.com/calendar/view/day/${year}/${month}/${day}`;
+    }
+
+    chrome.tabs.create({ url });
+  };
+
+  const handleDelete = async (event: CalendarEvent, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the event click
     if (!confirm(`Delete "${event.title}"?`)) return;
 
     try {
@@ -123,7 +144,8 @@ export function EventsList() {
               {events.map((event) => (
                 <div
                   key={`${event.source}-${event.id}`}
-                  className="p-3 bg-gray-50 rounded border border-gray-200 hover:border-gray-300 transition-colors"
+                  onClick={() => handleEventClick(event)}
+                  className="p-3 bg-gray-50 rounded border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-colors cursor-pointer"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
@@ -133,11 +155,6 @@ export function EventsList() {
                       <div className="text-xs text-gray-600 mt-1">
                         {formatDateTime(event.startISO, Intl.DateTimeFormat().resolvedOptions().timeZone)}
                       </div>
-                      {event.description && (
-                        <div className="text-xs text-gray-500 mt-1 line-clamp-2">
-                          {event.description}
-                        </div>
-                      )}
                       <div className="flex items-center gap-1 mt-1">
                         <span className={`text-xs px-2 py-0.5 rounded ${
                           event.source === 'google'
@@ -149,7 +166,7 @@ export function EventsList() {
                       </div>
                     </div>
                     <button
-                      onClick={() => handleDelete(event)}
+                      onClick={(e) => handleDelete(event, e)}
                       className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
                       title="Delete event"
                     >
