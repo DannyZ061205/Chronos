@@ -23,6 +23,7 @@ export function CommandInput() {
   } = usePopupStore();
 
   const [isParsing, setIsParsing] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-focus input and restore cursor position on mount
@@ -34,6 +35,40 @@ export function CommandInput() {
         inputRef.current.setSelectionRange(cursorPosition, cursorPosition);
       }
     }
+
+    // Listen for auto-stopped recording messages from background
+    const messageListener = (message: any) => {
+      if (message.type === 'RECORDING_TRANSCRIPTION_READY') {
+        // Auto-stop completed successfully
+        setIsRecording(false);
+        setInputText(message.text);
+
+        usePopupStore.getState().showToast({
+          type: 'success',
+          message: 'Voice transcribed successfully!',
+        });
+
+        // Focus input after transcription
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      } else if (message.type === 'RECORDING_TRANSCRIPTION_ERROR') {
+        // Auto-stop transcription failed
+        setIsRecording(false);
+
+        usePopupStore.getState().showToast({
+          type: 'error',
+          message: message.error || 'Failed to transcribe audio',
+        });
+      }
+    };
+
+    chrome.runtime.onMessage.addListener(messageListener);
+
+    // Cleanup listener on unmount
+    return () => {
+      chrome.runtime.onMessage.removeListener(messageListener);
+    };
   }, []);
 
   // Save cursor position whenever it changes
@@ -231,12 +266,79 @@ export function CommandInput() {
     }
   };
 
-  // Handle voice input button click - show coming soon message
-  const handleVoiceInput = () => {
-    usePopupStore.getState().showToast({
-      type: 'info',
-      message: 'Voice input feature is coming this winter! Stay tuned.',
-    });
+  // Handle voice input button click
+  const handleVoiceInput = async () => {
+    if (isRecording) {
+      // Stop recording
+      setIsRecording(false);
+
+      try {
+        const response = await chrome.runtime.sendMessage({ type: 'STOP_RECORDING' });
+
+        if (response.success && response.text) {
+          // Set the transcribed text in the input
+          setInputText(response.text);
+
+          usePopupStore.getState().showToast({
+            type: 'success',
+            message: 'Voice transcribed successfully!',
+          });
+
+          // Focus input after transcription
+          if (inputRef.current) {
+            inputRef.current.focus();
+          }
+        } else {
+          usePopupStore.getState().showToast({
+            type: 'error',
+            message: response.error || 'Failed to transcribe audio',
+          });
+        }
+      } catch (error) {
+        console.error('Error stopping recording:', error);
+        usePopupStore.getState().showToast({
+          type: 'error',
+          message: 'Failed to stop recording',
+        });
+      }
+    } else {
+      // Start recording
+      try {
+        console.log('[POPUP] Starting recording...');
+
+        const response = await chrome.runtime.sendMessage({ type: 'START_RECORDING' });
+
+        if (response.success) {
+          setIsRecording(true);
+          usePopupStore.getState().showToast({
+            type: 'info',
+            message: 'Recording... Click again to stop',
+          });
+        } else {
+          // Check if it's a permission error
+          if (response.error && response.error.includes('Permission dismissed')) {
+            // Open permission page in new tab
+            chrome.tabs.create({ url: chrome.runtime.getURL('permission.html') });
+
+            usePopupStore.getState().showToast({
+              type: 'info',
+              message: 'Please grant microphone permission in the new tab, then try again.',
+            });
+          } else {
+            usePopupStore.getState().showToast({
+              type: 'error',
+              message: response.error || 'Failed to start recording',
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error starting recording:', error);
+        usePopupStore.getState().showToast({
+          type: 'error',
+          message: 'Failed to start recording.',
+        });
+      }
+    }
   };
 
   const disabled = uiState === 'submitting' || isParsing;
@@ -263,9 +365,13 @@ export function CommandInput() {
         <button
           onClick={handleVoiceInput}
           disabled={disabled}
-          className={`absolute right-2 top-2 p-2 rounded-lg transition-all bg-purple-100 hover:bg-purple-200 text-purple-600 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-          aria-label="Voice input (coming soon)"
-          title="Voice input - Coming this winter!"
+          className={`absolute right-2 top-2 p-2 rounded-lg transition-all ${
+            isRecording
+              ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse'
+              : 'bg-purple-100 hover:bg-purple-200 text-purple-600'
+          } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+          aria-label={isRecording ? 'Stop recording' : 'Start voice input'}
+          title={isRecording ? 'Click to stop recording' : 'Click to start voice input'}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />

@@ -12,29 +12,42 @@ import type {
   ModifyEventResponse,
   CalendarEvent
 } from '../types';
+import { transcribeAudio } from '../utils/whisperTranscription';
 
 // Offscreen document management
 let creatingOffscreen: Promise<void> | null = null;
 
 async function setupOffscreenDocument() {
-  const existingContexts = await chrome.runtime.getContexts({
-    contextTypes: ['OFFSCREEN_DOCUMENT' as any],
-  });
+  try {
+    console.log('[OFFSCREEN] Setting up offscreen document...');
 
-  if (existingContexts.length > 0) {
-    return;
-  }
-
-  if (creatingOffscreen) {
-    await creatingOffscreen;
-  } else {
-    creatingOffscreen = chrome.offscreen.createDocument({
-      url: 'offscreen.html',
-      reasons: ['USER_MEDIA' as any],
-      justification: 'Recording audio for voice input transcription',
+    const existingContexts = await chrome.runtime.getContexts({
+      contextTypes: ['OFFSCREEN_DOCUMENT' as any],
     });
-    await creatingOffscreen;
+
+    if (existingContexts.length > 0) {
+      console.log('[OFFSCREEN] Offscreen document already exists');
+      return;
+    }
+
+    if (creatingOffscreen) {
+      console.log('[OFFSCREEN] Already creating offscreen document, waiting...');
+      await creatingOffscreen;
+    } else {
+      console.log('[OFFSCREEN] Creating new offscreen document...');
+      creatingOffscreen = chrome.offscreen.createDocument({
+        url: 'offscreen.html',
+        reasons: ['USER_MEDIA' as any],
+        justification: 'Recording audio for voice input transcription',
+      });
+      await creatingOffscreen;
+      creatingOffscreen = null;
+      console.log('[OFFSCREEN] Offscreen document created successfully');
+    }
+  } catch (error) {
+    console.error('[OFFSCREEN] Error creating offscreen document:', error);
     creatingOffscreen = null;
+    throw error;
   }
 }
 
@@ -51,13 +64,15 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
   if (request.type === 'START_RECORDING') {
     setupOffscreenDocument()
       .then(() => {
+        console.log('[BACKGROUND] Offscreen document ready, sending START_RECORDING message...');
         return chrome.runtime.sendMessage({ type: 'START_RECORDING' });
       })
-      .then(() => {
+      .then((response) => {
+        console.log('[BACKGROUND] START_RECORDING response:', response);
         sendResponse({ success: true });
       })
       .catch((error) => {
-        console.error('Error starting recording:', error);
+        console.error('[BACKGROUND] Error starting recording:', error);
         sendResponse({ success: false, error: error.message });
       });
     return true;
@@ -65,14 +80,39 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
 
   if (request.type === 'STOP_RECORDING') {
     chrome.runtime.sendMessage({ type: 'STOP_RECORDING' })
-      .then(() => {
-        sendResponse({ success: true });
+      .then(async (response) => {
+        if (!response.success) {
+          sendResponse({ success: false, error: response.error });
+          return;
+        }
+
+        // Transcribe the audio using Whisper
+        console.log('[BACKGROUND] Received audio, transcribing...');
+        const transcriptionResult = await transcribeAudio(
+          response.audioBlob.data,
+          response.audioBlob.mimeType
+        );
+
+        if (transcriptionResult.success) {
+          console.log('[BACKGROUND] Transcription successful:', transcriptionResult.text);
+          sendResponse({ success: true, text: transcriptionResult.text });
+        } else {
+          console.error('[BACKGROUND] Transcription failed:', transcriptionResult.error);
+          sendResponse({ success: false, error: transcriptionResult.error });
+        }
       })
       .catch((error) => {
         console.error('Error stopping recording:', error);
         sendResponse({ success: false, error: error.message });
       });
     return true;
+  }
+
+  // Handle auto-stop recording from voice activity detection
+  if (request.type === 'RECORDING_AUTO_STOPPED') {
+    handleAutoStoppedRecording(request.audioBlob);
+    // No need to send response, this is a notification
+    return false;
   }
 
   if (request.type === 'CREATE_EVENT') {
@@ -1364,10 +1404,92 @@ async function modifyOutlookEvent(
   }
 }
 
+/**
+ * Handle auto-stopped recording from voice activity detection
+ */
+async function handleAutoStoppedRecording(audioBlob: any) {
+  console.log('[BACKGROUND] Recording auto-stopped by voice detection, transcribing...');
+
+  try {
+    const transcriptionResult = await transcribeAudio(
+      audioBlob.data,
+      audioBlob.mimeType
+    );
+
+    if (transcriptionResult.success) {
+      console.log('[BACKGROUND] Auto-stop transcription successful:', transcriptionResult.text);
+
+      // Send message to popup to update with transcribed text
+      chrome.runtime.sendMessage({
+        type: 'RECORDING_TRANSCRIPTION_READY',
+        text: transcriptionResult.text,
+        autoStopped: true
+      });
+    } else {
+      console.error('[BACKGROUND] Auto-stop transcription failed:', transcriptionResult.error);
+
+      // Notify popup of error
+      chrome.runtime.sendMessage({
+        type: 'RECORDING_TRANSCRIPTION_ERROR',
+        error: transcriptionResult.error
+      });
+    }
+  } catch (error) {
+    console.error('[BACKGROUND] Error handling auto-stopped recording:', error);
+  }
+}
+
+// Proactive token refresh - check and refresh Outlook token every hour
+chrome.alarms.create('refreshOutlookToken', { periodInMinutes: 60 });
+
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === 'refreshOutlookToken') {
+    console.log('[TOKEN REFRESH] Checking Outlook token...');
+
+    const result = await chrome.storage.local.get([
+      'outlookToken',
+      'outlookTokenExpiry',
+      'outlookRefreshToken'
+    ]);
+
+    const token = result.outlookToken;
+    const expiry = result.outlookTokenExpiry;
+    const refreshToken = result.outlookRefreshToken;
+
+    if (!token || !refreshToken) {
+      console.log('[TOKEN REFRESH] No Outlook token found, skipping refresh');
+      return;
+    }
+
+    // Refresh if token will expire in next 24 hours (proactive refresh)
+    const expiryBuffer = 24 * 60 * 60 * 1000; // 24 hours
+    if (expiry && expiry < Date.now() + expiryBuffer) {
+      console.log('[TOKEN REFRESH] Token expiring soon, refreshing proactively...');
+      console.log('[TOKEN REFRESH] Token expiry:', new Date(expiry).toISOString());
+      console.log('[TOKEN REFRESH] Current time:', new Date().toISOString());
+
+      const newToken = await refreshOutlookToken(refreshToken);
+      if (newToken) {
+        console.log('[TOKEN REFRESH] Token refreshed successfully!');
+      } else {
+        console.error('[TOKEN REFRESH] Failed to refresh token');
+        // Mark as disconnected so user knows to reconnect
+        await chrome.storage.local.set({ outlookConnected: false });
+      }
+    } else {
+      console.log('[TOKEN REFRESH] Token still valid, no refresh needed');
+      console.log('[TOKEN REFRESH] Token expires:', new Date(expiry).toISOString());
+    }
+  }
+});
+
 // Install/update handler
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
     // First install - open options page
     chrome.runtime.openOptionsPage();
   }
+
+  // On install or update, set up the token refresh alarm
+  chrome.alarms.create('refreshOutlookToken', { periodInMinutes: 60 });
 });
