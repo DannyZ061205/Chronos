@@ -24,6 +24,7 @@ export function CommandInput() {
 
   const [isParsing, setIsParsing] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-focus input and restore cursor position on mount
@@ -38,15 +39,15 @@ export function CommandInput() {
 
     // Listen for auto-stopped recording messages from background
     const messageListener = (message: any) => {
-      if (message.type === 'RECORDING_TRANSCRIPTION_READY') {
+      if (message.type === 'RECORDING_AUTO_STOPPED_TRANSCRIBING') {
+        // Auto-stop triggered, now transcribing
+        setIsRecording(false);
+        setIsTranscribing(true);
+      } else if (message.type === 'RECORDING_TRANSCRIPTION_READY') {
         // Auto-stop completed successfully
         setIsRecording(false);
+        setIsTranscribing(false);
         setInputText(message.text);
-
-        usePopupStore.getState().showToast({
-          type: 'success',
-          message: 'Voice transcribed successfully!',
-        });
 
         // Focus input after transcription
         if (inputRef.current) {
@@ -55,6 +56,7 @@ export function CommandInput() {
       } else if (message.type === 'RECORDING_TRANSCRIPTION_ERROR') {
         // Auto-stop transcription failed
         setIsRecording(false);
+        setIsTranscribing(false);
 
         usePopupStore.getState().showToast({
           type: 'error',
@@ -269,8 +271,9 @@ export function CommandInput() {
   // Handle voice input button click
   const handleVoiceInput = async () => {
     if (isRecording) {
-      // Stop recording
+      // Stop recording and start transcribing
       setIsRecording(false);
+      setIsTranscribing(true);
 
       try {
         const response = await chrome.runtime.sendMessage({ type: 'STOP_RECORDING' });
@@ -278,17 +281,14 @@ export function CommandInput() {
         if (response.success && response.text) {
           // Set the transcribed text in the input
           setInputText(response.text);
-
-          usePopupStore.getState().showToast({
-            type: 'success',
-            message: 'Voice transcribed successfully!',
-          });
+          setIsTranscribing(false);
 
           // Focus input after transcription
           if (inputRef.current) {
             inputRef.current.focus();
           }
         } else {
+          setIsTranscribing(false);
           usePopupStore.getState().showToast({
             type: 'error',
             message: response.error || 'Failed to transcribe audio',
@@ -296,6 +296,7 @@ export function CommandInput() {
         }
       } catch (error) {
         console.error('Error stopping recording:', error);
+        setIsTranscribing(false);
         usePopupStore.getState().showToast({
           type: 'error',
           message: 'Failed to stop recording',
@@ -310,20 +311,11 @@ export function CommandInput() {
 
         if (response.success) {
           setIsRecording(true);
-          usePopupStore.getState().showToast({
-            type: 'info',
-            message: 'Recording... Click again to stop',
-          });
         } else {
           // Check if it's a permission error
           if (response.error && response.error.includes('Permission dismissed')) {
             // Open permission page in new tab
             chrome.tabs.create({ url: chrome.runtime.getURL('permission.html') });
-
-            usePopupStore.getState().showToast({
-              type: 'info',
-              message: 'Please grant microphone permission in the new tab, then try again.',
-            });
           } else {
             usePopupStore.getState().showToast({
               type: 'error',
@@ -341,7 +333,7 @@ export function CommandInput() {
     }
   };
 
-  const disabled = uiState === 'submitting' || isParsing;
+  const disabled = uiState === 'submitting' || isParsing || isTranscribing;
   const showParseButton = inputText.trim() && inputText !== lastParsedText;
 
   return (
@@ -356,7 +348,7 @@ export function CommandInput() {
           onClick={handleSelectionChange}
           onKeyUp={handleSelectionChange}
           disabled={disabled}
-          placeholder="Type an event: 'Lunch with Sara Friday 1pm for 45m'"
+          placeholder={isTranscribing ? "Transcribing your voice..." : "Type an event: 'Lunch with Sara Friday 1pm for 45m'"}
           className={`input resize-none pr-12 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
           rows={2}
           aria-label="Event command input"
@@ -366,16 +358,25 @@ export function CommandInput() {
           onClick={handleVoiceInput}
           disabled={disabled}
           className={`absolute right-2 top-2 p-2 rounded-lg transition-all ${
-            isRecording
+            isTranscribing
+              ? 'bg-purple-500 text-white'
+              : isRecording
               ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse'
               : 'bg-purple-100 hover:bg-purple-200 text-purple-600'
           } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-          aria-label={isRecording ? 'Stop recording' : 'Start voice input'}
-          title={isRecording ? 'Click to stop recording' : 'Click to start voice input'}
+          aria-label={isTranscribing ? 'Transcribing...' : isRecording ? 'Stop recording' : 'Start voice input'}
+          title={isTranscribing ? 'Transcribing audio...' : isRecording ? 'Click to stop recording' : 'Click to start voice input'}
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-          </svg>
+          {isTranscribing ? (
+            <svg className="w-5 h-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          ) : (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+            </svg>
+          )}
         </button>
       </div>
 

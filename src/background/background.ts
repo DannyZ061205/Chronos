@@ -1410,6 +1410,11 @@ async function modifyOutlookEvent(
 async function handleAutoStoppedRecording(audioBlob: any) {
   console.log('[BACKGROUND] Recording auto-stopped by voice detection, transcribing...');
 
+  // Notify popup that transcription is starting
+  chrome.runtime.sendMessage({
+    type: 'RECORDING_AUTO_STOPPED_TRANSCRIBING'
+  });
+
   try {
     const transcriptionResult = await transcribeAudio(
       audioBlob.data,
