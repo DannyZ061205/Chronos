@@ -244,7 +244,7 @@ export function PreviewCard() {
             </svg>
             <div className="flex-1">
               <p className="text-xs font-medium text-gray-500 mb-1">Description</p>
-              <p className="text-gray-700 text-sm">{description}</p>
+              <p className="text-gray-700 text-sm whitespace-pre-line">{description}</p>
             </div>
           </div>
         )}

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Chronos - Natural Calendar Assistant",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Create calendar events in Google & Outlook with natural language. Recurring events, undo/redo, and multi-event support.",
   "permissions": [
     "storage",

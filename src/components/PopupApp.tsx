@@ -14,7 +14,7 @@ import { UndoRedoButtons } from './UndoRedoButtons';
 import { TimeConfirmation } from './TimeConfirmation';
 
 export function PopupApp() {
-  const { setAccountStatus, uiState } = usePopupStore();
+  const { setAccountStatus, uiState, accountStatus } = usePopupStore();
   const { loadFromStorage } = useActionHistoryStore();
 
   // Check account status and load action history on mount
@@ -57,6 +57,29 @@ export function PopupApp() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Connection Status Indicators */}
+          <div className="relative flex items-end gap-1.5">
+            <div
+              className={`relative w-5 h-5 rounded overflow-hidden ${!accountStatus.google && 'opacity-40'}`}
+              title={accountStatus.google ? 'Google Calendar connected' : 'Google Calendar not connected'}
+            >
+              <img src="/logos/google-calendar.jpg" alt="Google" className="w-full h-full object-cover" />
+            </div>
+            <div
+              className={`relative w-5 h-5 rounded overflow-hidden -translate-y-[5px] ${!accountStatus.outlook && 'opacity-40'}`}
+              title={accountStatus.outlook ? 'Outlook Calendar connected' : 'Outlook Calendar not connected'}
+            >
+              <img src="/logos/outlook-calendar.png" alt="Outlook" className="w-full h-full object-cover" />
+            </div>
+            {/* Green dots positioned absolutely at the same level */}
+            {accountStatus.google && (
+              <div className="absolute bottom-0 left-[14px] w-2 h-2 bg-green-400 rounded-full border border-white" />
+            )}
+            {accountStatus.outlook && (
+              <div className="absolute bottom-0 left-[38px] w-2 h-2 bg-green-400 rounded-full border border-white" />
+            )}
+          </div>
+
           <UndoRedoButtons />
           <button
             onClick={handleOpenSettings}

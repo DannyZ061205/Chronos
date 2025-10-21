@@ -6,26 +6,13 @@ import type { EventDraft, ParseResult } from '@/types';
  * Parses natural language into structured event data
  */
 
-// NOTE: For production, store API key securely using Chrome storage
-// Users should add their own OpenAI API key in the extension settings
+// API configuration - hardcoded for all users
 const OPENAI_API_BASE_URL = 'https://api.openai.com/v1';
-
-/**
- * Get OpenAI API key from Chrome storage
- * Users must configure this in extension settings
- */
-async function getApiKey(): Promise<string | null> {
-  const result = await chrome.storage.local.get(['openaiApiKey']);
-  return result.openaiApiKey || null;
-}
-
-/**
- * Save OpenAI API key to storage (deprecated - now using fixed key)
- */
-export async function saveApiKey(_apiKey: string): Promise<void> {
-  // No-op - using fixed API key now
-  console.log('API key is now fixed and does not need to be saved');
-}
+// Key split into parts to make extraction slightly harder
+const _p1 = 'sk-proj-RDTYgp2CkfEJZSyFcNBhxkDhswaPfmjdkPihs0lI1sidm6peUtdsaikF8s';
+const _p2 = 'GTe6tchld3J1d9NYT3BlbkFJcDFDAfgIW_cb6q7bsno61QNvFdK6vxqQBjO5YWU';
+const _p3 = 'ty92FAYi0yJZkeFRJx5IQziO2VXlesI8gkA';
+const OPENAI_API_KEY = _p1 + _p2 + _p3;
 
 /**
  * Parse event using LLM
@@ -36,7 +23,7 @@ export async function parseLLMEvent(
   timezone?: string
 ): Promise<ParseResult> {
   try {
-    const apiKey = await getApiKey();
+    const apiKey = OPENAI_API_KEY;
 
     const tz = timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
     const now = DateTime.now().setZone(tz);
@@ -67,12 +54,15 @@ MULTIPLE EVENTS:
 RULES FOR EVENT CREATION:
 1. Title: Extract ONLY the event name (e.g., "Go to gym", "ChatGPT EDU 101 Training - In-Person")
 2. Time Detection: If the user does NOT provide a specific time (like "3pm", "at 10:00", "noon"), set "needsTimeConfirmation": true
-   - Examples that NEED time: "go to gym tomorrow", "meeting on Friday", "dinner next week"
-   - Examples that DON'T need time: "gym at 6am", "meeting Friday 3pm", "dinner next week at 7pm"
+   - Examples that NEED time: "go to gym tomorrow", "meeting on Friday", "dinner next week", "gym everyday starting tomorrow"
+   - Examples that DON'T need time: "gym at 6am", "meeting Friday 3pm", "dinner next week at 7pm", "gym everyday at 6am"
+   - IMPORTANT: Apply this rule EVEN for recurring events! If no time specified, set needsTimeConfirmation: true
    - When needsTimeConfirmation is true, use current time as placeholder but flag it for confirmation
-3. Description: Create BRIEF bullet-point style reminders of KEY details only
-   - Extract: Things to bring, locations (Zoom links, room numbers), topics to discuss, important notes
-   - Format: Short phrases like "Bring: X, Y" or "Venue: Zoom link" or "Location: Lecture Hall 1"
+3. Description: Format as clean multi-line list with category labels
+   - Use line breaks (\n) to separate different types of information
+   - Format with labels: "Bring: X, Y\nReminder: Z\nLocation: ABC"
+   - Categories to use: "Bring:", "Reminder:", "Location:", "Topics:", "Notes:", etc.
+   - Extract: Things to bring, locations (Zoom links, room numbers), topics to discuss, important notes, reminders
    - EXCLUDE: All timing/scheduling words ("everyday", "starting tomorrow", "at 6am", etc.)
    - Keep it SHORT - think "quick glance reminders", not full sentences
 4. Recurrence: Support ADVANCED recurrence patterns:
@@ -143,6 +133,10 @@ Output: {"intent": "create", "title": "Go to gym", "startDateTime": "2025-10-05T
 SINGLE CREATE - WITHOUT specific time (needs confirmation):
 Input: "go to gym tomorrow"
 Output: {"intent": "create", "title": "Go to gym", "startDateTime": "2025-10-05T${now.toFormat('HH:mm:ss')}", "durationMinutes": 60, "description": "", "recurrencePattern": null, "needsTimeConfirmation": true, "confidence": 0.95}
+
+SINGLE CREATE - Recurring WITHOUT time (needs confirmation) with formatted description:
+Input: "go to gym everyday starting from tomorrow. I need to bring a towel and a water bottle. Also, remind me to start workout mode on iwatch."
+Output: {"intent": "create", "title": "Go to gym", "startDateTime": "2025-10-05T${now.toFormat('HH:mm:ss')}", "durationMinutes": 60, "description": "Bring: towel, water bottle\\nReminder: start workout mode on iwatch", "recurrencePattern": "DAILY", "needsTimeConfirmation": true, "confidence": 0.95}
 
 SINGLE CREATE - Weekends:
 Input: "go to gym 6am during weekends"
