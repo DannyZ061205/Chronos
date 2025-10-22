@@ -13,9 +13,10 @@ import { ModifyForm } from './ModifyForm';
 import { UndoRedoButtons } from './UndoRedoButtons';
 import { TimeConfirmation } from './TimeConfirmation';
 import { DurationConfirmation } from './DurationConfirmation';
+import { ViewEvents } from './ViewEvents';
 
 export function PopupApp() {
-  const { setAccountStatus, uiState, accountStatus } = usePopupStore();
+  const { setAccountStatus, uiState, accountStatus, viewTimeframe } = usePopupStore();
   const { loadFromStorage } = useActionHistoryStore();
 
   // Check account status and load action history on mount
@@ -111,6 +112,15 @@ export function PopupApp() {
 
         {/* Modify Form */}
         {uiState === 'modify_form' && <ModifyForm />}
+
+        {/* View Events */}
+        {uiState === 'view_events' && viewTimeframe && (
+          <ViewEvents
+            timeframe={viewTimeframe.timeframe}
+            startISO={viewTimeframe.startISO}
+            endISO={viewTimeframe.endISO}
+          />
+        )}
 
         {/* Preview or Edit Form */}
         {uiState === 'editing' ? <EditForm /> : <PreviewCard />}

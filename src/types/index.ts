@@ -17,7 +17,7 @@ export interface EventDraft {
 }
 
 // Command intent types
-export type CommandIntent = 'create' | 'create_multiple' | 'delete' | 'modify';
+export type CommandIntent = 'create' | 'create_multiple' | 'delete' | 'modify' | 'view';
 
 export interface CreateIntent {
   intent: 'create';
@@ -44,7 +44,15 @@ export interface ModifyIntent {
   confidence: number;
 }
 
-export type ParsedIntent = CreateIntent | CreateMultipleIntent | DeleteIntent | ModifyIntent;
+export interface ViewIntent {
+  intent: 'view';
+  timeframe: string; // Natural language timeframe (e.g., "Friday", "this week", "tomorrow")
+  startISO?: string; // Parsed start date
+  endISO?: string; // Parsed end date
+  confidence: number;
+}
+
+export type ParsedIntent = CreateIntent | CreateMultipleIntent | DeleteIntent | ModifyIntent | ViewIntent;
 
 export interface ParseResult {
   success: boolean;
@@ -190,6 +198,7 @@ export type UIState =
   | 'error'
   | 'delete_confirm'
   | 'modify_form'
+  | 'view_events' // View filtered events for a specific timeframe
   | 'time_confirmation' // Ask user for specific time when not provided
   | 'duration_confirmation'; // Ask user to confirm LLM-suggested duration
 

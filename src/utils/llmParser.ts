@@ -44,6 +44,7 @@ INTENT DETECTION:
 - CREATE: "add", "create", "schedule", "book", event descriptions without keywords
 - DELETE: "delete", "remove", "cancel", "clear"
 - MODIFY: "change", "move", "update", "reschedule", "edit"
+- VIEW: "what do I have", "show me", "list", "view", "what's on", "my events", "my schedule"
 
 MULTIPLE EVENTS:
 - If the input contains MULTIPLE distinct events with different times/dates, extract ALL of them
@@ -143,6 +144,15 @@ FOR MODIFY:
   "confidence": number
 }
 
+FOR VIEW:
+{
+  "intent": "view",
+  "timeframe": "natural language timeframe (e.g., 'Friday', 'this week', 'tomorrow', 'next Monday')",
+  "startDateTime": "ISO datetime for start of range",
+  "endDateTime": "ISO datetime for end of range",
+  "confidence": number
+}
+
 Examples:
 
 SINGLE CREATE - Simple recurrence WITH time:
@@ -196,6 +206,18 @@ Output: {"intent": "delete", "searchQuery": "gym repeating", "confidence": 0.9}
 MODIFY:
 Input: "move gym to 7am"
 Output: {"intent": "modify", "searchQuery": "gym", "changes": {"time": "7am"}, "confidence": 0.9}
+
+VIEW:
+Input: "what do I have for Friday?"
+Output: {"intent": "view", "timeframe": "Friday", "startDateTime": "${now.plus({ days: (5 - now.weekday + 7) % 7 || 7 }).startOf('day').toISO()}", "endDateTime": "${now.plus({ days: (5 - now.weekday + 7) % 7 || 7 }).endOf('day').toISO()}", "confidence": 0.95}
+
+VIEW (this week):
+Input: "show me my events this week"
+Output: {"intent": "view", "timeframe": "this week", "startDateTime": "${now.startOf('week').toISO()}", "endDateTime": "${now.endOf('week').toISO()}", "confidence": 0.95}
+
+VIEW (tomorrow):
+Input: "what's on my schedule tomorrow?"
+Output: {"intent": "view", "timeframe": "tomorrow", "startDateTime": "${now.plus({ days: 1 }).startOf('day').toISO()}", "endDateTime": "${now.plus({ days: 1 }).endOf('day').toISO()}", "confidence": 0.95}
 
 CRITICAL:
 - ALWAYS include "intent" field
@@ -286,6 +308,19 @@ CRITICAL:
           intent: 'modify',
           searchQuery: parsed.searchQuery,
           changes: parsed.changes || {},
+          confidence: parsed.confidence,
+        },
+      };
+    }
+
+    if (intent === 'view') {
+      return {
+        success: true,
+        intent: {
+          intent: 'view',
+          timeframe: parsed.timeframe,
+          startISO: parsed.startDateTime,
+          endISO: parsed.endDateTime,
           confidence: parsed.confidence,
         },
       };

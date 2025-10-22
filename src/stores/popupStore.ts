@@ -63,7 +63,11 @@ interface PopupStore {
   setMatchedEvents: (events: CalendarEvent[]) => void;
   selectedEvent: CalendarEvent | null;
   setSelectedEvent: (event: CalendarEvent | null) => void;
-  
+
+  // View events state
+  viewTimeframe: { timeframe: string; startISO: string; endISO: string } | null;
+  setViewTimeframe: (timeframe: { timeframe: string; startISO: string; endISO: string } | null) => void;
+
   // Targets
   targets: { google: boolean; outlook: boolean };
   setTargets: (targets: { google: boolean; outlook: boolean }) => void;
@@ -98,6 +102,7 @@ export const usePopupStore = create<PopupStore>()(
   currentEventIndex: 0,
   matchedEvents: [],
   selectedEvent: null,
+  viewTimeframe: null,
   targets: { google: true, outlook: true },
   toast: null,
   accountStatus: { google: false, outlook: false },
@@ -124,6 +129,8 @@ export const usePopupStore = create<PopupStore>()(
   setMatchedEvents: (matchedEvents) => set({ matchedEvents }),
 
   setSelectedEvent: (selectedEvent) => set({ selectedEvent }),
+
+  setViewTimeframe: (viewTimeframe) => set({ viewTimeframe }),
 
   setTargets: (targets) => set({ targets }),
 

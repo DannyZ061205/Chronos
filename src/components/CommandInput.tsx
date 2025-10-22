@@ -224,6 +224,15 @@ export function CommandInput() {
             console.error('Error fetching events for modify:', error);
             setUIState('idle');
           }
+        } else if (result.intent.intent === 'view') {
+          // View events in a specific timeframe
+          // Store the view intent data for the ViewEvents component
+          usePopupStore.getState().setViewTimeframe({
+            timeframe: result.intent.timeframe,
+            startISO: result.intent.startISO || '',
+            endISO: result.intent.endISO || '',
+          });
+          setUIState('view_events');
         }
       } else if (result.success && result.draft) {
         // Legacy support
