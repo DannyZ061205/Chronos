@@ -10,6 +10,7 @@ export function EditForm() {
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [duration, setDuration] = useState('60');
+  const [reminder, setReminder] = useState('60');
   const [description, setDescription] = useState('');
   const [repeatPattern, setRepeatPattern] = useState<string>('none');
 
@@ -37,6 +38,9 @@ export function EditForm() {
       const end = DateTime.fromISO(eventDraft.endISO);
       const durationMins = end.diff(start, 'minutes').minutes;
       setDuration(Math.round(durationMins).toString());
+
+      // Set reminder (default to 60 if not set)
+      setReminder((eventDraft.reminderMinutes !== undefined ? eventDraft.reminderMinutes : 60).toString());
     }
   }, [eventDraft]);
   
@@ -73,6 +77,7 @@ export function EditForm() {
       tz: eventDraft.tz,
       description: description.trim() || undefined,
       recurrence: rrule,
+      reminderMinutes: parseInt(reminder, 10),
     };
     
     setEventDraft(updatedDraft);
@@ -147,6 +152,27 @@ export function EditForm() {
             <option value="90">1.5 hours</option>
             <option value="120">2 hours</option>
             <option value="180">3 hours</option>
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="reminder" className="block text-sm font-medium text-gray-700 mb-1">
+            Reminder
+          </label>
+          <select
+            id="reminder"
+            value={reminder}
+            onChange={(e) => setReminder(e.target.value)}
+            className="input"
+          >
+            <option value="0">No reminder</option>
+            <option value="5">5 minutes before</option>
+            <option value="10">10 minutes before</option>
+            <option value="15">15 minutes before</option>
+            <option value="30">30 minutes before</option>
+            <option value="60">1 hour before</option>
+            <option value="120">2 hours before</option>
+            <option value="1440">1 day before</option>
           </select>
         </div>
 

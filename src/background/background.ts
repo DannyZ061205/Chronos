@@ -238,6 +238,26 @@ async function createGoogleCalendarEvent(
       eventPayload.description = payload.description;
     }
 
+    // Add reminders (default to 1 hour if not specified)
+    const reminderMinutes = payload.reminderMinutes !== undefined ? payload.reminderMinutes : 60;
+    if (reminderMinutes > 0) {
+      eventPayload.reminders = {
+        useDefault: false,
+        overrides: [
+          {
+            method: 'popup',
+            minutes: reminderMinutes,
+          },
+        ],
+      };
+    } else {
+      // No reminder
+      eventPayload.reminders = {
+        useDefault: false,
+        overrides: [],
+      };
+    }
+
     console.log('Google Calendar - Final eventPayload:', eventPayload);
 
     // Add recurrence if provided
@@ -357,6 +377,16 @@ async function createOutlookCalendarEvent(
         contentType: 'text',
         content: payload.description,
       };
+    }
+
+    // Add reminders (default to 1 hour if not specified)
+    const reminderMinutes = payload.reminderMinutes !== undefined ? payload.reminderMinutes : 60;
+    if (reminderMinutes > 0) {
+      eventPayload.isReminderOn = true;
+      eventPayload.reminderMinutesBeforeStart = reminderMinutes;
+    } else {
+      // No reminder
+      eventPayload.isReminderOn = false;
     }
 
     console.log('Outlook Calendar - Final eventPayload:', eventPayload);

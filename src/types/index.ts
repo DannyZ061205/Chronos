@@ -12,6 +12,7 @@ export interface EventDraft {
   needsTimeConfirmation?: boolean; // True if user didn't provide specific time
   needsDurationConfirmation?: boolean; // True if duration should be confirmed with user
   suggestedDurationMinutes?: number; // LLM's suggested duration for confirmation
+  reminderMinutes?: number; // Reminder time in minutes before event (default: 60)
 }
 
 // Command intent types
@@ -80,6 +81,7 @@ export interface CreateEventRequest {
     tz: string;
     description?: string;
     recurrence?: string;
+    reminderMinutes?: number;
     targets: { google: boolean; outlook: boolean };
     clientRequestId: string;
   };

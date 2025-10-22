@@ -88,7 +88,13 @@ RULES FOR EVENT CREATION:
      * For weekends (SA,SU): Pick the next Saturday or Sunday
      * For weekdays (MO-FR): Pick the next weekday
      * For specific days (e.g., MO,WE): Pick the next occurrence of one of those days
-6. If there's a dash (-), text after it usually goes to description
+6. Reminders: ALWAYS include a reminder for events
+   - Default: Set "reminderMinutes": 60 (1 hour before) for all events
+   - If user explicitly mentions reminder time (e.g., "remind me 15 min before"), use that value
+   - Examples: "remind me 15 minutes before" → 15, "remind me 30 min before" → 30, "reminder 2 hours before" → 120
+   - If user says "no reminder" or "don't remind me", set to 0
+   - Always express in minutes before the event
+7. If there's a dash (-), text after it usually goes to description
 
 Return JSON based on intent:
 
@@ -102,6 +108,7 @@ FOR SINGLE CREATE:
   "recurrencePattern": "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY" | "WEEKLY;BYDAY=SA,SU" | "WEEKLY;BYDAY=MO,TU,WE,TH,FR" | "WEEKLY;INTERVAL=2" | "DAILY;INTERVAL=3" | null,
   "needsTimeConfirmation": true | false,
   "needsDurationConfirmation": true,
+  "reminderMinutes": number,
   "confidence": number
 }
 
@@ -140,15 +147,19 @@ Examples:
 
 SINGLE CREATE - Simple recurrence WITH time:
 Input: "go to gym everyday starting from tomorrow at 6am"
-Output: {"intent": "create", "title": "Go to gym", "startDateTime": "2025-10-05T06:00:00.000+04:00", "durationMinutes": 90, "description": "", "recurrencePattern": "DAILY", "needsTimeConfirmation": false, "needsDurationConfirmation": true, "confidence": 0.95}
+Output: {"intent": "create", "title": "Go to gym", "startDateTime": "2025-10-05T06:00:00.000+04:00", "durationMinutes": 90, "description": "", "recurrencePattern": "DAILY", "needsTimeConfirmation": false, "needsDurationConfirmation": true, "reminderMinutes": 60, "confidence": 0.95}
 
 SINGLE CREATE - WITHOUT specific time (needs confirmation):
 Input: "go to gym tomorrow"
-Output: {"intent": "create", "title": "Go to gym", "startDateTime": "2025-10-05T${now.toFormat('HH:mm:ss')}", "durationMinutes": 90, "description": "", "recurrencePattern": null, "needsTimeConfirmation": true, "needsDurationConfirmation": true, "confidence": 0.95}
+Output: {"intent": "create", "title": "Go to gym", "startDateTime": "2025-10-05T${now.toFormat('HH:mm:ss')}", "durationMinutes": 90, "description": "", "recurrencePattern": null, "needsTimeConfirmation": true, "needsDurationConfirmation": true, "reminderMinutes": 60, "confidence": 0.95}
 
 SINGLE CREATE - Extensive session (long duration):
 Input: "piano practice extensive tonight"
-Output: {"intent": "create", "title": "Piano practice", "startDateTime": "2025-10-04T${now.toFormat('HH:mm:ss')}", "durationMinutes": 180, "description": "", "recurrencePattern": null, "needsTimeConfirmation": true, "needsDurationConfirmation": true, "confidence": 0.95}
+Output: {"intent": "create", "title": "Piano practice", "startDateTime": "2025-10-04T${now.toFormat('HH:mm:ss')}", "durationMinutes": 180, "description": "", "recurrencePattern": null, "needsTimeConfirmation": true, "needsDurationConfirmation": true, "reminderMinutes": 60, "confidence": 0.95}
+
+SINGLE CREATE - Custom reminder time:
+Input: "meeting with Sarah tomorrow at 3pm, remind me 15 minutes before"
+Output: {"intent": "create", "title": "Meeting with Sarah", "startDateTime": "2025-10-05T15:00:00.000+04:00", "durationMinutes": 60, "description": "", "recurrencePattern": null, "needsTimeConfirmation": false, "needsDurationConfirmation": true, "reminderMinutes": 15, "confidence": 0.95}
 
 SINGLE CREATE - Recurring WITHOUT time (needs confirmation) with formatted description:
 Input: "go to gym everyday starting from tomorrow. I need to bring a towel and a water bottle. Also, remind me to start workout mode on iwatch."
@@ -310,6 +321,7 @@ CRITICAL:
           needsTimeConfirmation: event.needsTimeConfirmation || false,
           needsDurationConfirmation: event.needsDurationConfirmation || false,
           suggestedDurationMinutes: event.durationMinutes,
+          reminderMinutes: event.reminderMinutes !== undefined ? event.reminderMinutes : 60, // Default to 60 minutes
         };
       });
 
@@ -353,6 +365,7 @@ CRITICAL:
       needsTimeConfirmation: parsed.needsTimeConfirmation || false,
       needsDurationConfirmation: parsed.needsDurationConfirmation || false,
       suggestedDurationMinutes: parsed.durationMinutes,
+      reminderMinutes: parsed.reminderMinutes !== undefined ? parsed.reminderMinutes : 60, // Default to 60 minutes
     };
 
     console.log('LLM Parser - Final draft:', draft);

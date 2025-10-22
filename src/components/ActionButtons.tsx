@@ -56,6 +56,7 @@ export function ActionButtons() {
           tz: eventDraft.tz,
           description: eventDraft.description,
           recurrence: eventDraft.recurrence,
+          reminderMinutes: eventDraft.reminderMinutes,
           targets: {
             google: targets.google && accountStatus.google,
             outlook: targets.outlook && accountStatus.outlook,
