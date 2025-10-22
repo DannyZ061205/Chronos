@@ -176,7 +176,7 @@ export const usePopupStore = create<PopupStore>()(
       partialize: (state) => ({
         inputText: state.inputText,
         cursorPosition: state.cursorPosition,
-        lastParsedText: state.lastParsedText,
+        // Don't persist lastParsedText - it should reset each session
         uiState: state.uiState,
         eventDraft: state.eventDraft,
         parsedIntent: state.parsedIntent,

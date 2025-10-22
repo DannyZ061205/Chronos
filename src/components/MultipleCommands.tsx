@@ -12,9 +12,6 @@ export function MultipleCommands() {
     return null;
   }
 
-  const handleBack = () => {
-    setUIState('idle');
-  };
 
   const handleToggle = (index: number, command: ParsedIntent) => {
     const newExpanded = expandedIndex === index ? null : index;
@@ -114,6 +111,20 @@ export function MultipleCommands() {
           <div className="border-t border-gray-200">
             {command.intent === 'create' && (
               <div className="p-4 space-y-3">
+                <div className="flex items-start justify-between mb-3">
+                  <h4 className="font-semibold text-gray-900">{command.draft.title}</h4>
+                  <button
+                    onClick={() => {
+                      setEventDraft(command.draft);
+                      setUIState('editing');
+                    }}
+                    className="text-purple-600 hover:text-purple-700 text-sm font-medium"
+                    aria-label="Edit event details"
+                  >
+                    Edit
+                  </button>
+                </div>
+
                 <div className="space-y-2 text-sm">
                   <div className="flex items-start gap-2">
                     <svg className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -165,17 +176,35 @@ export function MultipleCommands() {
                     </div>
                   )}
                 </div>
+
+                <div className="flex gap-2 mt-4">
+                  <button
+                    onClick={() => {
+                      setEventDraft(command.draft);
+                      setUIState('preview');
+                    }}
+                    className="btn-primary flex-1"
+                  >
+                    Confirm
+                  </button>
+                  <button
+                    onClick={() => {
+                      setExpandedIndex(null);
+                    }}
+                    className="btn-secondary"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             )}
 
             {command.intent === 'view' && (
-              <div className="p-4">
-                <ViewEvents
-                  timeframe={command.timeframe}
-                  startISO={command.startISO || ''}
-                  endISO={command.endISO || ''}
-                />
-              </div>
+              <ViewEvents
+                timeframe={command.timeframe}
+                startISO={command.startISO || ''}
+                endISO={command.endISO || ''}
+              />
             )}
 
             {command.intent === 'delete' && (
@@ -213,17 +242,9 @@ export function MultipleCommands() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-lg text-gray-900">
-          Multiple Commands ({multipleCommands.length})
-        </h3>
-        <button
-          onClick={handleBack}
-          className="text-purple-600 hover:text-purple-700 text-sm font-medium"
-        >
-          Back
-        </button>
-      </div>
+      <h3 className="font-semibold text-lg text-gray-900">
+        Multiple Commands ({multipleCommands.length})
+      </h3>
 
       <div className="space-y-2">
         {multipleCommands.map((command, index) => renderCommandContent(command, index))}

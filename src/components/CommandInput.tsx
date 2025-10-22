@@ -265,7 +265,7 @@ export function CommandInput() {
     const newText = e.target.value;
     setInputText(newText);
 
-    // If input is cleared, reset the preview
+    // If input is cleared, reset everything
     if (!newText.trim()) {
       setEventDraft(null);
       setUIState('idle');
@@ -274,6 +274,17 @@ export function CommandInput() {
       setParseConfidence(0);
       usePopupStore.getState().setMultipleEventDrafts([]);
       usePopupStore.getState().setCurrentEventIndex(0);
+      usePopupStore.getState().setMultipleCommands(null);
+      usePopupStore.getState().setViewTimeframe(null);
+    } else {
+      // If user is typing and we're showing results, reset to idle so parse button shows
+      if (uiState !== 'idle' && uiState !== 'parsing' && uiState !== 'editing') {
+        setUIState('idle');
+        setEventDraft(null);
+        setParsedIntent(null);
+        usePopupStore.getState().setMultipleCommands(null);
+        usePopupStore.getState().setViewTimeframe(null);
+      }
     }
   };
 
@@ -287,6 +298,12 @@ export function CommandInput() {
       setEventDraft(null);
       setUIState('idle');
       setLastParsedText('');
+      setParsedIntent(null);
+      setParseConfidence(0);
+      usePopupStore.getState().setMultipleEventDrafts([]);
+      usePopupStore.getState().setCurrentEventIndex(0);
+      usePopupStore.getState().setMultipleCommands(null);
+      usePopupStore.getState().setViewTimeframe(null);
     }
   };
 
@@ -356,7 +373,12 @@ export function CommandInput() {
   };
 
   const disabled = uiState === 'submitting' || isParsing || isTranscribing;
-  const showParseButton = inputText.trim() && inputText !== lastParsedText;
+
+  // Hide parse button when showing results (user should clear/edit to parse again)
+  const isShowingResults = uiState !== 'idle' && uiState !== 'parsing';
+
+  // Show parse button only when: (1) there's text AND (2) not showing results
+  const showParseButton = inputText.trim().length > 0 && !isShowingResults;
 
   return (
     <div className="space-y-2">

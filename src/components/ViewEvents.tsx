@@ -14,7 +14,7 @@ export function ViewEvents({ timeframe, startISO, endISO }: ViewEventsProps) {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const { setUIState, accountStatus } = usePopupStore();
+  const { accountStatus } = usePopupStore();
 
   useEffect(() => {
     loadEvents();
@@ -85,24 +85,8 @@ export function ViewEvents({ timeframe, startISO, endISO }: ViewEventsProps) {
     chrome.tabs.create({ url });
   };
 
-  const handleBack = () => {
-    setUIState('idle');
-  };
-
   return (
-    <div className="card space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-lg text-gray-900">
-          Events for {timeframe}
-        </h3>
-        <button
-          onClick={handleBack}
-          className="text-purple-600 hover:text-purple-700 text-sm font-medium"
-        >
-          Back
-        </button>
-      </div>
-
+    <div className="p-4 space-y-3">
       {loading && (
         <div className="text-center py-8">
           <div className="animate-spin h-8 w-8 border-2 border-purple-600 border-t-transparent rounded-full mx-auto" />
