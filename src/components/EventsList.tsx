@@ -109,7 +109,7 @@ export function EventsList() {
             </button>
           )}
           <svg
-            className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+            className={`w-4 h-4 transition-transform duration-500 ease-out ${isExpanded ? 'rotate-180' : ''}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -119,8 +119,13 @@ export function EventsList() {
         </div>
       </button>
 
-      {isExpanded && (
-        <div className="mt-2">
+      <div
+        className={`overflow-hidden transition-all duration-500 ease-out ${
+          isExpanded ? 'max-h-[1000px] opacity-100 mt-2' : 'max-h-0 opacity-0'
+        }`}
+      >
+        {isExpanded && (
+          <>
           {loading && (
             <div className="text-center py-4">
               <div className="animate-spin h-6 w-6 border-2 border-purple-600 border-t-transparent rounded-full mx-auto" />
@@ -141,11 +146,12 @@ export function EventsList() {
 
           {!loading && events.length > 0 && (
             <div className="space-y-2 max-h-80 overflow-y-auto">
-              {events.map((event) => (
+              {events.map((event, index) => (
                 <div
                   key={`${event.source}-${event.id}`}
                   onClick={() => handleEventClick(event)}
-                  className="p-3 bg-gray-50 rounded border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-colors cursor-pointer"
+                  className="p-3 bg-gray-50 rounded border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-colors cursor-pointer animate-fade-in-up"
+                  style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
@@ -179,8 +185,9 @@ export function EventsList() {
               ))}
             </div>
           )}
-        </div>
-      )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

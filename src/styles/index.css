@@ -50,3 +50,20 @@
 .toast-enter {
   animation: slideInUp 0.3s ease-out;
 }
+
+/* Animation for event items appearing */
+@keyframes fadeInUp {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out forwards;
+  opacity: 0;
+}
