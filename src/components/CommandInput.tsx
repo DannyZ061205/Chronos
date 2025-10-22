@@ -116,7 +116,12 @@ export function CommandInput() {
 
         // Handle different intents
         if (result.intent.intent === 'create') {
-          setEventDraft(result.intent.draft);
+          // Add original input to draft for context-aware time inference
+          const draftWithContext = {
+            ...result.intent.draft,
+            originalInput: inputText,
+          };
+          setEventDraft(draftWithContext);
           // Check if time confirmation is needed first
           if (result.intent.draft.needsTimeConfirmation) {
             setUIState('time_confirmation');

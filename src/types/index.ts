@@ -13,6 +13,7 @@ export interface EventDraft {
   needsDurationConfirmation?: boolean; // True if duration should be confirmed with user
   suggestedDurationMinutes?: number; // LLM's suggested duration for confirmation
   reminderMinutes?: number; // Reminder time in minutes before event (default: 60)
+  originalInput?: string; // Original user input for context inference
 }
 
 // Command intent types

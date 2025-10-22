@@ -36,12 +36,13 @@ export function TimeConfirmation() {
         hours = 0;
       } else if (!meridiem && hours >= 1 && hours <= 12) {
         // No am/pm specified - infer from context
-        const titleLower = eventDraft.title.toLowerCase();
+        // Check original input first (has full context), then fall back to title
+        const contextText = (eventDraft.originalInput || eventDraft.title).toLowerCase();
 
-        // Check for time-of-day keywords in the title
-        const isNight = /\b(tonight|night|evening)\b/i.test(titleLower);
-        const isMorning = /\b(morning|breakfast)\b/i.test(titleLower);
-        const isAfternoon = /\b(afternoon|lunch)\b/i.test(titleLower);
+        // Check for time-of-day keywords in the context
+        const isNight = /\b(tonight|night|evening)\b/i.test(contextText);
+        const isMorning = /\b(morning|breakfast)\b/i.test(contextText);
+        const isAfternoon = /\b(afternoon|lunch)\b/i.test(contextText);
 
         // Infer am/pm based on context
         if (isNight || isAfternoon) {
