@@ -1,130 +1,88 @@
-# Privacy Policy for Chronos - Natural Calendar Assistant
+# Privacy Policy for Chronos AI
 
-**Effective Date**: January 1, 2025
-**Last Updated**: January 1, 2025
+**Last Updated:** January 2025
 
 ## Introduction
 
-Chronos ("we", "our", or "the extension") is committed to protecting your privacy. This Privacy Policy explains how Chronos handles your data when you use our Chrome extension for calendar management.
+Chronos AI ("we", "our", or "us") is a Chrome extension that helps you manage your calendar events using natural language processing. This Privacy Policy explains how we collect, use, and protect your information.
 
-## Data Collection and Usage
+## Information We Collect
 
-### What Data We Collect
+### Calendar Data
+- **What we access:** Event titles, dates, times, descriptions, locations, and attendees from your Google Calendar and Microsoft Outlook Calendar
+- **Why we access it:** To display your upcoming events and allow you to create, modify, or delete events through natural language commands
+- **How we use it:** All calendar operations are performed directly between your browser and calendar providers. We do not store your calendar data on any servers.
 
-Chronos collects and stores **minimal data locally** on your device:
+### Authentication Information
+- **What we collect:** OAuth tokens to access your Google Calendar and Microsoft Outlook Calendar
+- **Why we collect it:** To authenticate your identity and access your calendars on your behalf
+- **How we store it:** Tokens are stored securely in your browser's local storage using Chrome's secure storage APIs. They never leave your device.
 
-1. **Calendar Connection Status**
-   - Whether you've connected Google Calendar and/or Outlook Calendar
-   - OAuth tokens for calendar access (stored securely in Chrome's local storage)
+### Usage Data
+- **What we collect:** Natural language commands you enter (e.g., "Lunch with Sara Friday 1pm")
+- **Why we collect it:** To parse your commands using OpenAI's GPT-4 API and create calendar events
+- **How we use it:** Commands are sent to OpenAI's API for processing and are not stored permanently by us
 
-2. **User Preferences**
-   - Default event duration setting
-   - Timezone preference
-   - Calendar selection preferences
+## How We Use Your Information
 
-3. **Action History**
-   - Undo/redo history for calendar operations
-   - Stored locally to enable undo functionality across sessions
+We use the collected information solely to:
+1. Display your upcoming calendar events
+2. Create, modify, or delete calendar events based on your commands
+3. Provide voice input functionality for hands-free event creation
+4. Sync events across Google Calendar and Microsoft Outlook Calendar
 
-### What Data We DO NOT Collect
+## Data Storage and Security
 
-- ❌ **No Personal Information**: We do not collect names, email addresses, or contact details
-- ❌ **No Calendar Event Content**: We do not store, transmit, or access your calendar events
-- ❌ **No Usage Analytics**: We do not track how you use the extension
-- ❌ **No Third-Party Sharing**: We do not share any data with third parties
-- ❌ **No Cookies or Tracking**: We do not use cookies or tracking technologies
+### Local Storage
+- All calendar data and authentication tokens are stored locally in your browser
+- No calendar data is transmitted to or stored on our servers
+- Data is encrypted using Chrome's secure storage mechanisms
 
-## Data Storage
+### Third-Party Services
+We use the following third-party services:
+- **OpenAI GPT-4o-mini**: For natural language processing of your event commands
+- **Google Calendar API**: To access and manage your Google Calendar events
+- **Microsoft Graph API**: To access and manage your Outlook Calendar events
+- **OpenAI Whisper API**: For voice-to-text transcription (when you use voice input)
 
-All data is stored **locally on your device** using Chrome's storage API:
-- Data never leaves your computer
-- Data is not transmitted to our servers (we don't have any servers!)
-- Data is automatically cleared when you uninstall the extension
+## Data Sharing
 
-## Third-Party Services
+We do NOT:
+- Sell your data to third parties
+- Share your calendar events with other users
+- Store your calendar data on any servers
+- Use your data for advertising purposes
 
-### Google Calendar API
-- Used to create, read, modify, and delete events in your Google Calendar
-- Requires OAuth authentication (you grant permission)
-- Governed by [Google's Privacy Policy](https://policies.google.com/privacy)
-- We only request calendar event permissions - nothing else
+We DO share limited data with:
+- **OpenAI**: Your natural language commands for processing (e.g., "Team meeting tomorrow at 3pm")
+- **Google**: Calendar API calls to read/write your Google Calendar events
+- **Microsoft**: Graph API calls to read/write your Outlook Calendar events
 
-### Microsoft Graph API (Outlook)
-- Used to create, read, modify, and delete events in your Outlook Calendar
-- Requires OAuth authentication (you grant permission)
-- Governed by [Microsoft's Privacy Policy](https://privacy.microsoft.com/privacystatement)
-- We only request calendar permissions - nothing else
+## Your Rights and Choices
 
-### OpenAI API
-- Used for natural language parsing of event descriptions
-- Event text you type is sent to OpenAI's API for parsing
-- No personal information is sent - only the event text
-- Governed by [OpenAI's Privacy Policy](https://openai.com/policies/privacy-policy)
-- We use our API key - you don't need an OpenAI account
-
-## Permissions Explained
-
-### Why We Need Each Permission
-
-- **storage**: Save your preferences and undo history locally on your device
-- **identity**: Enable OAuth authentication for Google Calendar (Chrome's built-in secure authentication)
-- **offscreen**: Planned for future voice input feature (currently unused)
-- **googleapis.com access**: Communicate with Google Calendar API to manage your events
-- **graph.microsoft.com access**: Communicate with Microsoft Graph API to manage your Outlook events
-
-## Data Security
-
-- **OAuth Tokens**: Stored securely in Chrome's encrypted storage
-- **No Server Communication**: Extension runs entirely on your device
-- **Open Source**: Code is available for review (transparency)
-- **No Data Breaches**: Since we don't collect or store data centrally, there's nothing to breach
-
-## Your Rights
-
-You have complete control over your data:
-
-- **Access**: All data is on your device - you can inspect it anytime
-- **Delete**: Uninstalling the extension removes all local data
-- **Disconnect**: Revoke calendar access anytime in the extension settings
-- **Export**: Your calendar data remains in Google/Outlook where you can export it
-
-## Children's Privacy
-
-Chronos is not directed at children under 13. We do not knowingly collect data from children.
-
-## Changes to Privacy Policy
-
-We may update this policy occasionally. Changes will be posted here with a new "Last Updated" date. Continued use after changes means you accept the updated policy.
+You have the right to:
+- **Access**: View what calendar data the extension accesses
+- **Delete**: Remove the extension at any time to stop all data access
+- **Revoke**: Disconnect your Google or Outlook accounts at any time through the extension settings
+- **Export**: Export your calendar data directly from Google Calendar or Outlook Calendar
 
 ## Data Retention
 
-- Local preferences and undo history: Kept until you uninstall the extension
-- OAuth tokens: Kept until you disconnect your calendar or uninstall
-- Calendar events: We never store these - they remain in your Google/Outlook account
+- Calendar data: Not retained by us (accessed in real-time only)
+- Authentication tokens: Stored until you disconnect your account or uninstall the extension
+- Natural language commands: Not stored by us (processed by OpenAI and discarded)
+
+## Children's Privacy
+
+Chronos AI is not intended for use by children under 13. We do not knowingly collect information from children under 13.
 
 ## Contact Us
 
-Questions about privacy or data handling?
+If you have questions about this Privacy Policy, please contact:
 
-- **Email**: Danny20061205@gmail.com
-- **GitHub Issues**: https://github.com/DannyZ061205/Chronos/issues
-
-## Compliance
-
-- **GDPR Compliant**: We don't collect personal data
-- **CCPA Compliant**: We don't sell or share data
-- **Chrome Web Store Policies**: Fully compliant with all policies
-
-## Summary
-
-**TL;DR:**
-- ✅ Everything stays on your device
-- ✅ No tracking, analytics, or data collection
-- ✅ We never see your calendar events
-- ✅ OAuth for secure calendar access
-- ✅ You can delete everything by uninstalling
-- ✅ Open and transparent
+**Email:** danny20061205@gmail.com
+**GitHub:** https://github.com/DannyZ061205/Chronos
 
 ---
 
-**Your privacy is our priority. If you have concerns, please contact us.**
+**Effective Date:** January 2025
