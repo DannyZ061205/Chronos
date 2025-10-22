@@ -34,6 +34,37 @@ export function TimeConfirmation() {
         hours += 12;
       } else if (meridiem === 'am' && hours === 12) {
         hours = 0;
+      } else if (!meridiem && hours >= 1 && hours <= 12) {
+        // No am/pm specified - infer from context
+        const titleLower = eventDraft.title.toLowerCase();
+
+        // Check for time-of-day keywords in the title
+        const isNight = /\b(tonight|night|evening)\b/i.test(titleLower);
+        const isMorning = /\b(morning|breakfast)\b/i.test(titleLower);
+        const isAfternoon = /\b(afternoon|lunch)\b/i.test(titleLower);
+
+        // Infer am/pm based on context
+        if (isNight || isAfternoon) {
+          // "tonight", "evening", "night", "afternoon" → pm
+          if (hours >= 1 && hours <= 11) {
+            hours += 12; // Convert to pm
+          }
+        } else if (isMorning) {
+          // "morning", "breakfast" → am (keep as is)
+        } else {
+          // No clear context - use smart defaults
+          // 7-11 without am/pm → probably am (morning hours)
+          // 12 without am/pm → noon (pm)
+          // 1-6 without am/pm → probably pm (afternoon/evening)
+          if (hours >= 7 && hours <= 11) {
+            // 7am-11am (morning)
+          } else if (hours === 12) {
+            // 12pm (noon)
+          } else if (hours >= 1 && hours <= 6) {
+            // 1pm-6pm (afternoon/evening)
+            hours += 12;
+          }
+        }
       }
 
       if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
