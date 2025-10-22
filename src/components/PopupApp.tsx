@@ -14,6 +14,7 @@ import { UndoRedoButtons } from './UndoRedoButtons';
 import { TimeConfirmation } from './TimeConfirmation';
 import { DurationConfirmation } from './DurationConfirmation';
 import { ViewEvents } from './ViewEvents';
+import { MultipleCommands } from './MultipleCommands';
 
 export function PopupApp() {
   const { setAccountStatus, uiState, accountStatus, viewTimeframe } = usePopupStore();
@@ -121,6 +122,9 @@ export function PopupApp() {
             endISO={viewTimeframe.endISO}
           />
         )}
+
+        {/* Multiple Commands */}
+        {uiState === 'multiple_commands' && <MultipleCommands />}
 
         {/* Preview or Edit Form */}
         {uiState === 'editing' ? <EditForm /> : <PreviewCard />}

@@ -68,6 +68,10 @@ interface PopupStore {
   viewTimeframe: { timeframe: string; startISO: string; endISO: string } | null;
   setViewTimeframe: (timeframe: { timeframe: string; startISO: string; endISO: string } | null) => void;
 
+  // Multiple commands state
+  multipleCommands: ParsedIntent[] | null;
+  setMultipleCommands: (commands: ParsedIntent[] | null) => void;
+
   // Targets
   targets: { google: boolean; outlook: boolean };
   setTargets: (targets: { google: boolean; outlook: boolean }) => void;
@@ -103,6 +107,7 @@ export const usePopupStore = create<PopupStore>()(
   matchedEvents: [],
   selectedEvent: null,
   viewTimeframe: null,
+  multipleCommands: null,
   targets: { google: true, outlook: true },
   toast: null,
   accountStatus: { google: false, outlook: false },
@@ -131,6 +136,8 @@ export const usePopupStore = create<PopupStore>()(
   setSelectedEvent: (selectedEvent) => set({ selectedEvent }),
 
   setViewTimeframe: (viewTimeframe) => set({ viewTimeframe }),
+
+  setMultipleCommands: (multipleCommands) => set({ multipleCommands }),
 
   setTargets: (targets) => set({ targets }),
 

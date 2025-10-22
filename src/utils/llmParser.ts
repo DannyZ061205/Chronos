@@ -45,8 +45,16 @@ INTENT DETECTION:
 - DELETE: "delete", "remove", "cancel", "clear"
 - MODIFY: "change", "move", "update", "reschedule", "edit"
 - VIEW: "what do I have", "show me", "list", "view", "what's on", "my events", "my schedule"
+- MULTIPLE_COMMANDS: When input contains MULTIPLE distinct commands with DIFFERENT intents separated by punctuation (?, !, .) or conjunctions (and, also, then)
 
-MULTIPLE EVENTS:
+MULTIPLE COMMANDS (different intents in one input):
+- If input contains MULTIPLE distinct commands with DIFFERENT INTENT TYPES, return "multiple_commands"
+- Examples: "What do I have Friday? Create gym at 10" (VIEW + CREATE), "Delete meeting. Add lunch tomorrow" (DELETE + CREATE)
+- Each command gets its own intent object in the "commands" array
+- Each command must have a DIFFERENT intent type (not just multiple events of same type)
+- This is DIFFERENT from create_multiple (which is multiple events, all with CREATE intent)
+
+MULTIPLE EVENTS (same intent):
 - If the input contains MULTIPLE distinct events with different times/dates, extract ALL of them
 - Each event should be a separate object in an "events" array
 - Common in emails, announcements, or lists of events
@@ -153,6 +161,16 @@ FOR VIEW:
   "confidence": number
 }
 
+FOR MULTIPLE_COMMANDS:
+{
+  "intent": "multiple_commands",
+  "commands": [
+    {/* First command as its own intent object (view/create/delete/modify) */},
+    {/* Second command as its own intent object */}
+  ],
+  "confidence": number
+}
+
 Examples:
 
 SINGLE CREATE - Simple recurrence WITH time:
@@ -218,6 +236,14 @@ Output: {"intent": "view", "timeframe": "this week", "startDateTime": "${now.sta
 VIEW (tomorrow):
 Input: "what's on my schedule tomorrow?"
 Output: {"intent": "view", "timeframe": "tomorrow", "startDateTime": "${now.plus({ days: 1 }).startOf('day').toISO()}", "endDateTime": "${now.plus({ days: 1 }).endOf('day').toISO()}", "confidence": 0.95}
+
+MULTIPLE_COMMANDS (VIEW + CREATE):
+Input: "What do I have for Friday? go to gym at 10 today"
+Output: {"intent": "multiple_commands", "commands": [{"intent": "view", "timeframe": "Friday", "startDateTime": "${now.plus({ days: (5 - now.weekday + 7) % 7 || 7 }).startOf('day').toISO()}", "endDateTime": "${now.plus({ days: (5 - now.weekday + 7) % 7 || 7 }).endOf('day').toISO()}", "confidence": 0.95}, {"intent": "create", "title": "Go to gym", "startDateTime": "${now.toFormat('yyyy-MM-dd')}T10:00:00.000${now.toFormat('ZZZ')}", "durationMinutes": 90, "description": "", "recurrencePattern": null, "needsTimeConfirmation": false, "needsDurationConfirmation": true, "reminderMinutes": 60, "confidence": 0.95}], "confidence": 0.95}
+
+MULTIPLE_COMMANDS (DELETE + CREATE):
+Input: "delete the gym event and create lunch tomorrow at noon"
+Output: {"intent": "multiple_commands", "commands": [{"intent": "delete", "searchQuery": "gym", "confidence": 0.9}, {"intent": "create", "title": "Lunch", "startDateTime": "${now.plus({ days: 1 }).toFormat('yyyy-MM-dd')}T12:00:00.000${now.toFormat('ZZZ')}", "durationMinutes": 60, "description": "", "recurrencePattern": null, "needsTimeConfirmation": false, "needsDurationConfirmation": true, "reminderMinutes": 60, "confidence": 0.95}], "confidence": 0.9}
 
 CRITICAL:
 - ALWAYS include "intent" field
@@ -321,6 +347,78 @@ CRITICAL:
           timeframe: parsed.timeframe,
           startISO: parsed.startDateTime,
           endISO: parsed.endDateTime,
+          confidence: parsed.confidence,
+        },
+      };
+    }
+
+    if (intent === 'multiple_commands') {
+      // Process each command individually and build array of intents
+      const commands: any[] = [];
+
+      for (const cmd of parsed.commands) {
+        const cmdIntent = cmd.intent;
+
+        if (cmdIntent === 'view') {
+          commands.push({
+            intent: 'view',
+            timeframe: cmd.timeframe,
+            startISO: cmd.startDateTime,
+            endISO: cmd.endDateTime,
+            confidence: cmd.confidence,
+          });
+        } else if (cmdIntent === 'delete') {
+          commands.push({
+            intent: 'delete',
+            searchQuery: cmd.searchQuery,
+            confidence: cmd.confidence,
+          });
+        } else if (cmdIntent === 'modify') {
+          commands.push({
+            intent: 'modify',
+            searchQuery: cmd.searchQuery,
+            changes: cmd.changes || {},
+            confidence: cmd.confidence,
+          });
+        } else if (cmdIntent === 'create') {
+          // Process create intent
+          const startDateTime = DateTime.fromISO(cmd.startDateTime, { zone: tz });
+          const endDateTime = startDateTime.plus({ minutes: cmd.durationMinutes });
+          const hasDescription = cmd.description && cmd.description.trim().length > 0;
+
+          let rrule: string | undefined;
+          if (cmd.recurrencePattern) {
+            if (cmd.recurrencePattern.includes('FREQ=')) {
+              rrule = `RRULE:${cmd.recurrencePattern}`;
+            } else {
+              rrule = `RRULE:FREQ=${cmd.recurrencePattern}`;
+            }
+          }
+
+          commands.push({
+            intent: 'create',
+            draft: {
+              title: cmd.title,
+              startISO: startDateTime.toISO()!,
+              endISO: endDateTime.toISO()!,
+              tz,
+              description: hasDescription ? cmd.description.trim() : undefined,
+              recurrence: rrule,
+              needsTimeConfirmation: cmd.needsTimeConfirmation || false,
+              needsDurationConfirmation: cmd.needsDurationConfirmation || false,
+              suggestedDurationMinutes: cmd.durationMinutes,
+              reminderMinutes: cmd.reminderMinutes !== undefined ? cmd.reminderMinutes : 60,
+            },
+            confidence: cmd.confidence,
+          });
+        }
+      }
+
+      return {
+        success: true,
+        intent: {
+          intent: 'multiple_commands',
+          commands,
           confidence: parsed.confidence,
         },
       };

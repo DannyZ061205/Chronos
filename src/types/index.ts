@@ -17,7 +17,7 @@ export interface EventDraft {
 }
 
 // Command intent types
-export type CommandIntent = 'create' | 'create_multiple' | 'delete' | 'modify' | 'view';
+export type CommandIntent = 'create' | 'create_multiple' | 'delete' | 'modify' | 'view' | 'multiple_commands';
 
 export interface CreateIntent {
   intent: 'create';
@@ -52,7 +52,13 @@ export interface ViewIntent {
   confidence: number;
 }
 
-export type ParsedIntent = CreateIntent | CreateMultipleIntent | DeleteIntent | ModifyIntent | ViewIntent;
+export interface MultipleCommandsIntent {
+  intent: 'multiple_commands';
+  commands: Array<CreateIntent | DeleteIntent | ModifyIntent | ViewIntent>; // Array of individual intents (excluding nested multiple_commands)
+  confidence: number;
+}
+
+export type ParsedIntent = CreateIntent | CreateMultipleIntent | DeleteIntent | ModifyIntent | ViewIntent | MultipleCommandsIntent;
 
 export interface ParseResult {
   success: boolean;
@@ -199,6 +205,7 @@ export type UIState =
   | 'delete_confirm'
   | 'modify_form'
   | 'view_events' // View filtered events for a specific timeframe
+  | 'multiple_commands' // Handle multiple distinct commands in one input
   | 'time_confirmation' // Ask user for specific time when not provided
   | 'duration_confirmation'; // Ask user to confirm LLM-suggested duration
 

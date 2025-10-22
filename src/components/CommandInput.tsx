@@ -233,6 +233,11 @@ export function CommandInput() {
             endISO: result.intent.endISO || '',
           });
           setUIState('view_events');
+        } else if (result.intent.intent === 'multiple_commands') {
+          // Handle multiple distinct commands in one input
+          // Store all commands for the MultipleCommands component
+          usePopupStore.getState().setMultipleCommands(result.intent.commands);
+          setUIState('multiple_commands');
         }
       } else if (result.success && result.draft) {
         // Legacy support
