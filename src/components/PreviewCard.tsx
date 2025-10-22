@@ -19,7 +19,7 @@ export function PreviewCard() {
     return null;
   }
 
-  const { title, startISO, endISO, tz, description, recurrence } = eventDraft;
+  const { title, startISO, endISO, tz, description, recurrence, reminderMinutes } = eventDraft;
   const hasMultipleEvents = multipleEventDrafts.length > 0;
 
   const handlePrevious = () => {
@@ -144,7 +144,30 @@ export function PreviewCard() {
   };
 
   const recurrenceText = getRecurrenceText(recurrence);
-  
+
+  // Format reminder text
+  const getReminderText = (minutes?: number): string => {
+    if (minutes === undefined || minutes === 0) {
+      return 'No reminder';
+    }
+
+    if (minutes < 60) {
+      return `${minutes} minute${minutes === 1 ? '' : 's'} before`;
+    }
+
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+
+    if (remainingMinutes === 0) {
+      if (hours === 24) {
+        return '1 day before';
+      }
+      return `${hours} hour${hours === 1 ? '' : 's'} before`;
+    }
+
+    return `${hours}h ${remainingMinutes}m before`;
+  };
+
   return (
     <div className="card space-y-3">
       {hasMultipleEvents && (
@@ -235,6 +258,13 @@ export function PreviewCard() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <p className="text-gray-600">{tz}</p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+          <p className="text-gray-600">{getReminderText(reminderMinutes)}</p>
         </div>
 
         {description && (
