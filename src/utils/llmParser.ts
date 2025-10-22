@@ -16,10 +16,10 @@ const OPENAI_API_KEY = _p1 + _p2 + _p3;
 
 /**
  * Parse event using LLM
+ * The LLM will infer appropriate event durations based on event type
  */
 export async function parseLLMEvent(
   text: string,
-  defaultDurationMinutes: number = 60,
   timezone?: string
 ): Promise<ParseResult> {
   try {
@@ -33,7 +33,6 @@ export async function parseLLMEvent(
 TODAY IS: ${now.toFormat('EEEE, MMMM d, yyyy')} (${now.toFormat('EEEE')} is the current day of the week)
 Current exact time: ${now.toISO()}
 Timezone: ${tz}
-Default duration: ${defaultDurationMinutes} minutes
 
 IMPORTANT: When interpreting relative day references:
 - "today" = ${now.toFormat('EEEE, MMMM d, yyyy')}
@@ -58,14 +57,26 @@ RULES FOR EVENT CREATION:
    - Examples that DON'T need time: "gym at 6am", "meeting Friday 3pm", "dinner next week at 7pm", "gym everyday at 6am"
    - IMPORTANT: Apply this rule EVEN for recurring events! If no time specified, set needsTimeConfirmation: true
    - When needsTimeConfirmation is true, use current time as placeholder but flag it for confirmation
-3. Description: Format as clean multi-line list with category labels
+3. Duration: ALWAYS infer an appropriate and reasonable duration based on the event type. Use your judgment:
+   - Quick tasks/calls: 15-30 minutes (e.g., "quick call", "standup meeting", "coffee break")
+   - Standard meetings: 30-60 minutes (e.g., "team meeting", "1-on-1", "review session")
+   - Meals: 60-90 minutes (e.g., "lunch", "dinner", "breakfast meeting")
+   - Workouts/gym: 60-90 minutes (e.g., "gym", "workout", "yoga class")
+   - Training/workshops: 90-180 minutes (e.g., "training session", "workshop", "seminar")
+   - Conferences/all-day: 240-480 minutes (e.g., "conference", "all-day event", "retreat")
+   - Classes/lectures: 60-120 minutes (e.g., "class", "lecture", "course")
+   - Extensive/long sessions: 180+ minutes (e.g., "extensive piano practice", "long study session")
+   - If the user specifies duration explicitly (e.g., "2 hour meeting"), ALWAYS use that exact duration
+   - Default to 60 minutes only if the event type is unclear or generic
+   - IMPORTANT: ALWAYS set "needsDurationConfirmation": true so the user can review and adjust the suggested duration
+4. Description: Format as clean multi-line list with category labels
    - Use line breaks (\n) to separate different types of information
    - Format with labels: "Bring: X, Y\nReminder: Z\nLocation: ABC"
    - Categories to use: "Bring:", "Reminder:", "Location:", "Topics:", "Notes:", etc.
    - Extract: Things to bring, locations (Zoom links, room numbers), topics to discuss, important notes, reminders
    - EXCLUDE: All timing/scheduling words ("everyday", "starting tomorrow", "at 6am", etc.)
    - Keep it SHORT - think "quick glance reminders", not full sentences
-4. Recurrence: Support ADVANCED recurrence patterns:
+5. Recurrence: Support ADVANCED recurrence patterns:
    - Simple: "daily"/"everyday" → "DAILY", "weekly" → "WEEKLY", "monthly" → "MONTHLY", "yearly" → "YEARLY"
    - Weekends: "weekends"/"weekend" → "WEEKLY;BYDAY=SA,SU"
    - Weekdays: "weekdays"/"weekday" → "WEEKLY;BYDAY=MO,TU,WE,TH,FR"
@@ -77,7 +88,7 @@ RULES FOR EVENT CREATION:
      * For weekends (SA,SU): Pick the next Saturday or Sunday
      * For weekdays (MO-FR): Pick the next weekday
      * For specific days (e.g., MO,WE): Pick the next occurrence of one of those days
-4. If there's a dash (-), text after it usually goes to description
+6. If there's a dash (-), text after it usually goes to description
 
 Return JSON based on intent:
 
@@ -90,6 +101,7 @@ FOR SINGLE CREATE:
   "description": "brief key details only",
   "recurrencePattern": "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY" | "WEEKLY;BYDAY=SA,SU" | "WEEKLY;BYDAY=MO,TU,WE,TH,FR" | "WEEKLY;INTERVAL=2" | "DAILY;INTERVAL=3" | null,
   "needsTimeConfirmation": true | false,
+  "needsDurationConfirmation": true,
   "confidence": number
 }
 
@@ -128,35 +140,43 @@ Examples:
 
 SINGLE CREATE - Simple recurrence WITH time:
 Input: "go to gym everyday starting from tomorrow at 6am"
-Output: {"intent": "create", "title": "Go to gym", "startDateTime": "2025-10-05T06:00:00.000+04:00", "durationMinutes": 60, "description": "", "recurrencePattern": "DAILY", "needsTimeConfirmation": false, "confidence": 0.95}
+Output: {"intent": "create", "title": "Go to gym", "startDateTime": "2025-10-05T06:00:00.000+04:00", "durationMinutes": 90, "description": "", "recurrencePattern": "DAILY", "needsTimeConfirmation": false, "needsDurationConfirmation": true, "confidence": 0.95}
 
 SINGLE CREATE - WITHOUT specific time (needs confirmation):
 Input: "go to gym tomorrow"
-Output: {"intent": "create", "title": "Go to gym", "startDateTime": "2025-10-05T${now.toFormat('HH:mm:ss')}", "durationMinutes": 60, "description": "", "recurrencePattern": null, "needsTimeConfirmation": true, "confidence": 0.95}
+Output: {"intent": "create", "title": "Go to gym", "startDateTime": "2025-10-05T${now.toFormat('HH:mm:ss')}", "durationMinutes": 90, "description": "", "recurrencePattern": null, "needsTimeConfirmation": true, "needsDurationConfirmation": true, "confidence": 0.95}
+
+SINGLE CREATE - Extensive session (long duration):
+Input: "piano practice extensive tonight"
+Output: {"intent": "create", "title": "Piano practice", "startDateTime": "2025-10-04T${now.toFormat('HH:mm:ss')}", "durationMinutes": 180, "description": "", "recurrencePattern": null, "needsTimeConfirmation": true, "needsDurationConfirmation": true, "confidence": 0.95}
 
 SINGLE CREATE - Recurring WITHOUT time (needs confirmation) with formatted description:
 Input: "go to gym everyday starting from tomorrow. I need to bring a towel and a water bottle. Also, remind me to start workout mode on iwatch."
-Output: {"intent": "create", "title": "Go to gym", "startDateTime": "2025-10-05T${now.toFormat('HH:mm:ss')}", "durationMinutes": 60, "description": "Bring: towel, water bottle\\nReminder: start workout mode on iwatch", "recurrencePattern": "DAILY", "needsTimeConfirmation": true, "confidence": 0.95}
+Output: {"intent": "create", "title": "Go to gym", "startDateTime": "2025-10-05T${now.toFormat('HH:mm:ss')}", "durationMinutes": 90, "description": "Bring: towel, water bottle\\nReminder: start workout mode on iwatch", "recurrencePattern": "DAILY", "needsTimeConfirmation": true, "needsDurationConfirmation": true, "confidence": 0.95}
 
 SINGLE CREATE - Weekends:
 Input: "go to gym 6am during weekends"
-Output: {"intent": "create", "title": "Go to gym", "startDateTime": "2025-10-05T06:00:00.000+04:00", "durationMinutes": 60, "description": "", "recurrencePattern": "WEEKLY;BYDAY=SA,SU", "confidence": 0.95}
+Output: {"intent": "create", "title": "Go to gym", "startDateTime": "2025-10-05T06:00:00.000+04:00", "durationMinutes": 90, "description": "", "recurrencePattern": "WEEKLY;BYDAY=SA,SU", "confidence": 0.95}
 
-SINGLE CREATE - Weekdays:
+SINGLE CREATE - Weekdays (short standup):
 Input: "standup meeting 9am every weekday"
-Output: {"intent": "create", "title": "Standup meeting", "startDateTime": "2025-10-06T09:00:00.000+04:00", "durationMinutes": 60, "description": "", "recurrencePattern": "WEEKLY;BYDAY=MO,TU,WE,TH,FR", "confidence": 0.95}
+Output: {"intent": "create", "title": "Standup meeting", "startDateTime": "2025-10-06T09:00:00.000+04:00", "durationMinutes": 15, "description": "", "recurrencePattern": "WEEKLY;BYDAY=MO,TU,WE,TH,FR", "confidence": 0.95}
 
 SINGLE CREATE - Every N weeks:
 Input: "team meeting every 2 weeks on Monday at 10am"
 Output: {"intent": "create", "title": "Team meeting", "startDateTime": "2025-10-06T10:00:00.000+04:00", "durationMinutes": 60, "description": "", "recurrencePattern": "WEEKLY;INTERVAL=2;BYDAY=MO", "confidence": 0.95}
 
-SINGLE CREATE - Specific days:
+SINGLE CREATE - Specific days (yoga class):
 Input: "yoga class every Monday and Wednesday at 7pm"
-Output: {"intent": "create", "title": "Yoga class", "startDateTime": "2025-10-06T19:00:00.000+04:00", "durationMinutes": 60, "description": "", "recurrencePattern": "WEEKLY;BYDAY=MO,WE", "confidence": 0.95}
+Output: {"intent": "create", "title": "Yoga class", "startDateTime": "2025-10-06T19:00:00.000+04:00", "durationMinutes": 90, "description": "", "recurrencePattern": "WEEKLY;BYDAY=MO,WE", "confidence": 0.95}
 
-MULTIPLE CREATE:
+SINGLE CREATE - Lunch with explicit duration:
+Input: "lunch with Sarah tomorrow at noon, should take about 2 hours"
+Output: {"intent": "create", "title": "Lunch with Sarah", "startDateTime": "2025-10-05T12:00:00.000+04:00", "durationMinutes": 120, "description": "", "recurrencePattern": null, "needsTimeConfirmation": false, "confidence": 0.95}
+
+MULTIPLE CREATE (training sessions):
 Input: "Training sessions: 101 on Monday 6 Oct at 11:30 AM in Visitors Center, and 102 on Tuesday 7 Oct at 12 PM in Lecture Hall 1"
-Output: {"intent": "create_multiple", "events": [{"title": "Training 101", "startDateTime": "2025-10-06T11:30:00.000+04:00", "durationMinutes": 60, "description": "Venue: Visitors Center", "recurrencePattern": null}, {"title": "Training 102", "startDateTime": "2025-10-07T12:00:00.000+04:00", "durationMinutes": 60, "description": "Venue: Lecture Hall 1", "recurrencePattern": null}], "confidence": 0.95}
+Output: {"intent": "create_multiple", "events": [{"title": "Training 101", "startDateTime": "2025-10-06T11:30:00.000+04:00", "durationMinutes": 120, "description": "Venue: Visitors Center", "recurrencePattern": null}, {"title": "Training 102", "startDateTime": "2025-10-07T12:00:00.000+04:00", "durationMinutes": 120, "description": "Venue: Lecture Hall 1", "recurrencePattern": null}], "confidence": 0.95}
 
 DELETE:
 Input: "delete the repeating gym event"
@@ -288,6 +308,8 @@ CRITICAL:
           description: hasDescription ? event.description.trim() : undefined,
           recurrence: rrule,
           needsTimeConfirmation: event.needsTimeConfirmation || false,
+          needsDurationConfirmation: event.needsDurationConfirmation || false,
+          suggestedDurationMinutes: event.durationMinutes,
         };
       });
 
@@ -329,6 +351,8 @@ CRITICAL:
       description: hasDescription ? parsed.description.trim() : undefined,
       recurrence: rrule,
       needsTimeConfirmation: parsed.needsTimeConfirmation || false,
+      needsDurationConfirmation: parsed.needsDurationConfirmation || false,
+      suggestedDurationMinutes: parsed.durationMinutes,
     };
 
     console.log('LLM Parser - Final draft:', draft);

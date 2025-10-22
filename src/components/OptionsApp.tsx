@@ -1,24 +1,14 @@
 import { useState, useEffect } from 'react';
-import { getDefaults, saveDefaults, DEFAULT_SETTINGS, getTimezone } from '../utils/storage';
-import type { Defaults } from '../types';
 
 export function OptionsApp() {
-  const [defaults, setDefaults] = useState<Defaults>(DEFAULT_SETTINGS);
   const [googleConnected, setGoogleConnected] = useState(false);
   const [outlookConnected, setOutlookConnected] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
-  
+
   useEffect(() => {
-    loadSettings();
     checkConnectionStatus();
   }, []);
-  
-  const loadSettings = async () => {
-    const settings = await getDefaults();
-    setDefaults(settings);
-  };
-  
+
   const checkConnectionStatus = async () => {
     // Check Google
     try {
@@ -27,26 +17,10 @@ export function OptionsApp() {
     } catch {
       setGoogleConnected(false);
     }
-    
+
     // Check Outlook
     const storage = await chrome.storage.local.get(['outlookToken', 'outlookConnected']);
     setOutlookConnected(!!storage.outlookToken || !!storage.outlookConnected);
-  };
-  
-  const handleSave = async () => {
-    setSaving(true);
-    setMessage('');
-
-    try {
-      await saveDefaults(defaults);
-      setMessage('Settings saved successfully!');
-      setTimeout(() => setMessage(''), 3000);
-    } catch (error) {
-      setMessage('Error saving settings');
-      console.error(error);
-    } finally {
-      setSaving(false);
-    }
   };
   
   const handleConnectGoogle = async () => {
@@ -225,14 +199,12 @@ export function OptionsApp() {
       console.error('Error disconnecting Outlook:', error);
     }
   };
-  
-  const currentTz = getTimezone(defaults.tzOverride);
-  
+
   return (
     <div className="max-w-3xl mx-auto p-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Chronos Settings</h1>
-        <p className="text-gray-600">Manage your calendar connections and default settings</p>
+        <p className="text-gray-600">Manage your calendar connections</p>
       </div>
       
       {/* Message */}
@@ -306,78 +278,14 @@ export function OptionsApp() {
               </button>
             )}
           </div>
-          
-          {!outlookConnected && (
-            <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded text-sm text-amber-800">
-              <p className="font-medium mb-1">⚠️ Setup Required</p>
-              <p>You need to configure your Microsoft Client ID in the manifest.json file and in OptionsApp.tsx before connecting Outlook.</p>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Defaults Section */}
-      <section className="card mb-6">
-        <h2 className="text-xl font-semibold mb-4">Default Settings</h2>
-
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="duration" className="block text-sm font-medium text-gray-700 mb-2">
-              Default Event Duration
-            </label>
-            <select
-              id="duration"
-              value={defaults.durationMinutes}
-              onChange={(e) => setDefaults({ ...defaults, durationMinutes: parseInt(e.target.value) })}
-              className="input max-w-xs"
-            >
-              <option value="15">15 minutes</option>
-              <option value="30">30 minutes</option>
-              <option value="45">45 minutes</option>
-              <option value="60">1 hour</option>
-              <option value="90">1.5 hours</option>
-              <option value="120">2 hours</option>
-            </select>
-            <p className="text-sm text-gray-500 mt-1">
-              Used when no duration is specified in your command
-            </p>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Current Timezone
-            </label>
-            <p className="text-gray-900 font-mono text-sm bg-gray-50 p-2 rounded border border-gray-200">
-              {currentTz}
-            </p>
-            <p className="text-sm text-gray-500 mt-1">
-              Detected automatically from your browser
-            </p>
-          </div>
-        </div>
-        
-        <div className="mt-6 pt-4 border-t border-gray-200">
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="btn-primary"
-          >
-            {saving ? 'Saving...' : 'Save Settings'}
-          </button>
         </div>
       </section>
 
       {/* Footer */}
       <footer className="mt-8 text-center text-sm text-gray-500">
-        <p>Chronos v1.0.1 • Built for fast multi-calendar scheduling</p>
+        <p>Chronos v{chrome.runtime.getManifest().version} • Built for fast multi-calendar scheduling</p>
         <p className="mt-2 text-xs">
           🔒 Your privacy matters: All calendar data stays on your device. We never collect or transmit your personal information.
-        </p>
-        <p className="mt-4 text-xs bg-gray-100 p-2 rounded font-mono">
-          Extension ID: {chrome.runtime.id}
-        </p>
-        <p className="mt-1 text-xs text-gray-400">
-          ℹ️ Copy this ID if you need to configure OAuth in Google Cloud Console
         </p>
       </footer>
     </div>

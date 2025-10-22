@@ -56,7 +56,7 @@ export async function parseEventCommand(
 
   if (hasLLM) {
     console.log('parseEventCommand - Attempting LLM parse...');
-    const llmResult = await parseLLMEvent(text, defaultDurationMinutes, timezone);
+    const llmResult = await parseLLMEvent(text, timezone);
     console.log('parseEventCommand - LLM result:', llmResult);
 
     if (llmResult.success) {

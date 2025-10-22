@@ -57,7 +57,12 @@ export function TimeConfirmation() {
         needsTimeConfirmation: false,
       });
 
-      setUIState('preview');
+      // Check if duration confirmation is needed
+      if (eventDraft.needsDurationConfirmation) {
+        setUIState('duration_confirmation');
+      } else {
+        setUIState('preview');
+      }
     } catch (err) {
       setError('Failed to parse time. Please try again.');
     }

@@ -117,9 +117,12 @@ export function CommandInput() {
         // Handle different intents
         if (result.intent.intent === 'create') {
           setEventDraft(result.intent.draft);
-          // Check if time confirmation is needed
+          // Check if time confirmation is needed first
           if (result.intent.draft.needsTimeConfirmation) {
             setUIState('time_confirmation');
+          } else if (result.intent.draft.needsDurationConfirmation) {
+            // If time is provided but duration needs confirmation
+            setUIState('duration_confirmation');
           } else {
             setUIState('preview');
           }

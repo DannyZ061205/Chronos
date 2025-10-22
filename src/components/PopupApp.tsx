@@ -12,6 +12,7 @@ import { DeleteConfirmation } from './DeleteConfirmation';
 import { ModifyForm } from './ModifyForm';
 import { UndoRedoButtons } from './UndoRedoButtons';
 import { TimeConfirmation } from './TimeConfirmation';
+import { DurationConfirmation } from './DurationConfirmation';
 
 export function PopupApp() {
   const { setAccountStatus, uiState, accountStatus } = usePopupStore();
@@ -101,6 +102,9 @@ export function PopupApp() {
 
         {/* Time Confirmation */}
         {uiState === 'time_confirmation' && <TimeConfirmation />}
+
+        {/* Duration Confirmation */}
+        {uiState === 'duration_confirmation' && <DurationConfirmation />}
 
         {/* Delete Confirmation */}
         {uiState === 'delete_confirm' && <DeleteConfirmation />}

@@ -10,6 +10,8 @@ export interface EventDraft {
   description?: string; // Event description/notes
   recurrence?: string; // RRULE string for recurring events
   needsTimeConfirmation?: boolean; // True if user didn't provide specific time
+  needsDurationConfirmation?: boolean; // True if duration should be confirmed with user
+  suggestedDurationMinutes?: number; // LLM's suggested duration for confirmation
 }
 
 // Command intent types
@@ -185,7 +187,8 @@ export type UIState =
   | 'error'
   | 'delete_confirm'
   | 'modify_form'
-  | 'time_confirmation'; // Ask user for specific time when not provided
+  | 'time_confirmation' // Ask user for specific time when not provided
+  | 'duration_confirmation'; // Ask user to confirm LLM-suggested duration
 
 export interface ToastMessage {
   type: 'success' | 'error' | 'info';
