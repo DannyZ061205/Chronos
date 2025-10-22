@@ -4,7 +4,7 @@ import { usePopupStore } from '@/stores/popupStore';
 import type { EventDraft } from '@/types';
 
 export function EditForm() {
-  const { eventDraft, setEventDraft, setUIState, uiState } = usePopupStore();
+  const { eventDraft, setEventDraft, setUIState, uiState, previousUIState, setPreviousUIState } = usePopupStore();
   
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
@@ -79,13 +79,37 @@ export function EditForm() {
       recurrence: rrule,
       reminderMinutes: parseInt(reminder, 10),
     };
-    
+
     setEventDraft(updatedDraft);
-    setUIState('preview');
+
+    // Return to previous state if coming from multiple_commands, otherwise go to preview
+    if (previousUIState === 'multiple_commands') {
+      // Update the draft in multipleCommands array
+      const multipleCommands = usePopupStore.getState().multipleCommands;
+      if (multipleCommands) {
+        const updatedCommands = multipleCommands.map(cmd => {
+          if (cmd.intent === 'create' && cmd.draft.title === eventDraft.title) {
+            return { ...cmd, draft: updatedDraft };
+          }
+          return cmd;
+        });
+        usePopupStore.getState().setMultipleCommands(updatedCommands);
+      }
+      setUIState('multiple_commands');
+      setPreviousUIState(null);
+    } else {
+      setUIState('preview');
+    }
   };
-  
+
   const handleCancel = () => {
-    setUIState('preview');
+    // Return to previous state if coming from multiple_commands, otherwise go to preview
+    if (previousUIState === 'multiple_commands') {
+      setUIState('multiple_commands');
+      setPreviousUIState(null);
+    } else {
+      setUIState('preview');
+    }
   };
   
   return (

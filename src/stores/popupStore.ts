@@ -33,6 +33,8 @@ interface PopupStore {
   // UI State
   uiState: UIState;
   setUIState: (state: UIState) => void;
+  previousUIState: UIState | null;
+  setPreviousUIState: (state: UIState | null) => void;
 
   // Input
   inputText: string;
@@ -71,6 +73,8 @@ interface PopupStore {
   // Multiple commands state
   multipleCommands: ParsedIntent[] | null;
   setMultipleCommands: (commands: ParsedIntent[] | null) => void;
+  editingCommandIndex: number | null;
+  setEditingCommandIndex: (index: number | null) => void;
 
   // Targets
   targets: { google: boolean; outlook: boolean };
@@ -96,6 +100,7 @@ export const usePopupStore = create<PopupStore>()(
     (set) => ({
   // Initial state
   uiState: 'idle',
+  previousUIState: null,
   inputText: '',
   cursorPosition: 0,
   lastParsedText: '',
@@ -108,12 +113,15 @@ export const usePopupStore = create<PopupStore>()(
   selectedEvent: null,
   viewTimeframe: null,
   multipleCommands: null,
+  editingCommandIndex: null,
   targets: { google: true, outlook: true },
   toast: null,
   accountStatus: { google: false, outlook: false },
 
   // Actions (persist middleware handles persistence automatically)
   setUIState: (uiState) => set({ uiState }),
+
+  setPreviousUIState: (previousUIState) => set({ previousUIState }),
 
   setInputText: (inputText) => set({ inputText }),
 
@@ -138,6 +146,8 @@ export const usePopupStore = create<PopupStore>()(
   setViewTimeframe: (viewTimeframe) => set({ viewTimeframe }),
 
   setMultipleCommands: (multipleCommands) => set({ multipleCommands }),
+
+  setEditingCommandIndex: (editingCommandIndex) => set({ editingCommandIndex }),
 
   setTargets: (targets) => set({ targets }),
 

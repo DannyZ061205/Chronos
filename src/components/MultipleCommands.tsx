@@ -1,12 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePopupStore } from '@/stores/popupStore';
-import type { ParsedIntent } from '@/types';
+import type { ParsedIntent, EventDraft } from '@/types';
 import { ViewEvents } from './ViewEvents';
 import { formatDateTime } from '@/utils/parser';
+import { DateTime } from 'luxon';
 
 export function MultipleCommands() {
-  const { multipleCommands, setEventDraft, setUIState } = usePopupStore();
+  const { multipleCommands, setEventDraft, setUIState, setPreviousUIState, editingCommandIndex, setEditingCommandIndex } = usePopupStore();
   const [expandedIndex, setExpandedIndex] = useState<number | null>(0); // Auto-expand first command
+  const [timeConfirmingIndex, setTimeConfirmingIndex] = useState<number | null>(null);
+  const [timeInput, setTimeInput] = useState('');
+  const [timeError, setTimeError] = useState('');
+
+  // Restore expanded state when returning from edit
+  useEffect(() => {
+    if (editingCommandIndex !== null) {
+      setExpandedIndex(editingCommandIndex);
+      // Clear after restoring
+      setEditingCommandIndex(null);
+    }
+  }, [editingCommandIndex, setEditingCommandIndex]);
 
   if (!multipleCommands || multipleCommands.length === 0) {
     return null;
@@ -20,6 +33,95 @@ export function MultipleCommands() {
     // If expanding a CREATE command, set it as the event draft
     if (newExpanded === index && command.intent === 'create') {
       setEventDraft(command.draft);
+
+      // Check if time confirmation is needed
+      if (command.draft.needsTimeConfirmation) {
+        setTimeConfirmingIndex(index);
+        setTimeInput('');
+        setTimeError('');
+      }
+    } else {
+      setTimeConfirmingIndex(null);
+    }
+  };
+
+  const handleTimeSubmit = (commandIndex: number, draft: EventDraft) => {
+    if (!timeInput.trim()) {
+      setTimeError('Please enter a time');
+      return;
+    }
+
+    try {
+      // Parse the time input (same logic as TimeConfirmation component)
+      const timeRegex = /^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i;
+      const match = timeInput.trim().toLowerCase().match(timeRegex);
+
+      if (!match) {
+        setTimeError('Invalid time format. Try "3pm", "15:00", or "9:30am"');
+        return;
+      }
+
+      let hours = parseInt(match[1]);
+      const minutes = match[2] ? parseInt(match[2]) : 0;
+      const meridiem = match[3];
+
+      // Convert to 24-hour format
+      if (meridiem === 'pm' && hours !== 12) {
+        hours += 12;
+      } else if (meridiem === 'am' && hours === 12) {
+        hours = 0;
+      } else if (!meridiem && hours >= 1 && hours <= 12) {
+        const contextText = (draft.originalInput || draft.title).toLowerCase();
+        const isNight = /\b(tonight|night|evening)\b/i.test(contextText);
+        const isMorning = /\b(morning|breakfast)\b/i.test(contextText);
+        const isAfternoon = /\b(afternoon|lunch)\b/i.test(contextText);
+
+        if (isNight || isAfternoon) {
+          if (hours >= 1 && hours <= 11) {
+            hours += 12;
+          }
+        } else if (!isMorning) {
+          if (hours >= 7 && hours <= 11) {
+            // morning
+          } else if (hours === 12) {
+            // noon
+          } else if (hours >= 1 && hours <= 6) {
+            hours += 12;
+          }
+        }
+      }
+
+      if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+        setTimeError('Invalid time. Hours must be 0-23, minutes 0-59');
+        return;
+      }
+
+      // Update the draft with the new time
+      const currentStart = DateTime.fromISO(draft.startISO);
+      const newStart = currentStart.set({ hour: hours, minute: minutes });
+      const currentEnd = DateTime.fromISO(draft.endISO);
+      const duration = currentEnd.diff(currentStart, 'minutes').minutes;
+      const newEnd = newStart.plus({ minutes: duration });
+
+      const updatedDraft = {
+        ...draft,
+        startISO: newStart.toISO()!,
+        endISO: newEnd.toISO()!,
+        needsTimeConfirmation: false,
+      };
+
+      // Update the command in multipleCommands array
+      const updatedCommands = [...multipleCommands];
+      if (updatedCommands[commandIndex].intent === 'create') {
+        (updatedCommands[commandIndex] as any).draft = updatedDraft;
+      }
+
+      usePopupStore.getState().setMultipleCommands(updatedCommands);
+      setTimeConfirmingIndex(null);
+      setTimeInput('');
+      setTimeError('');
+    } catch (err) {
+      setTimeError('Failed to parse time. Please try again.');
     }
   };
 
@@ -98,7 +200,7 @@ export function MultipleCommands() {
             <span className="font-medium text-gray-900">{getCommandTitle(command)}</span>
           </div>
           <svg
-            className={`w-5 h-5 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+            className={`w-5 h-5 text-gray-400 transition-transform duration-500 ease-out ${isExpanded ? 'rotate-180' : ''}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -107,23 +209,86 @@ export function MultipleCommands() {
           </svg>
         </button>
 
-        {isExpanded && (
-          <div className="border-t border-gray-200">
+        <div
+          className={`border-t border-gray-200 overflow-hidden transition-all duration-500 ease-out ${
+            isExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0 border-t-0'
+          }`}
+        >
+          {isExpanded && (
+            <>
             {command.intent === 'create' && (
               <div className="p-4 space-y-3">
-                <div className="flex items-start justify-between mb-3">
-                  <h4 className="font-semibold text-gray-900">{command.draft.title}</h4>
-                  <button
-                    onClick={() => {
-                      setEventDraft(command.draft);
-                      setUIState('editing');
-                    }}
-                    className="text-purple-600 hover:text-purple-700 text-sm font-medium"
-                    aria-label="Edit event details"
-                  >
-                    Edit
-                  </button>
-                </div>
+                {/* Show time confirmation if needed */}
+                {timeConfirmingIndex === index && command.draft.needsTimeConfirmation ? (
+                  <div className="space-y-3">
+                    <div className="mb-3">
+                      <h4 className="text-sm font-semibold text-gray-900 mb-1">What time?</h4>
+                      <p className="text-xs text-gray-600">
+                        You didn't specify a time for "<span className="font-medium">{command.draft.title}</span>". Please enter the time:
+                      </p>
+                    </div>
+
+                    <div>
+                      <input
+                        type="text"
+                        value={timeInput}
+                        onChange={(e) => {
+                          setTimeInput(e.target.value);
+                          setTimeError('');
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleTimeSubmit(index, command.draft);
+                          }
+                        }}
+                        placeholder="e.g., 3pm, 15:00, 9:30am"
+                        className="input"
+                        autoFocus
+                      />
+                      {timeError && (
+                        <p className="text-xs text-red-600 mt-1">{timeError}</p>
+                      )}
+                      <p className="text-xs text-gray-500 mt-1">
+                        Examples: "3pm", "15:00", "9:30am"
+                      </p>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleTimeSubmit(index, command.draft)}
+                        className="btn-primary flex-1"
+                      >
+                        Continue
+                      </button>
+                      <button
+                        onClick={() => {
+                          setTimeConfirmingIndex(null);
+                          setTimeInput('');
+                          setTimeError('');
+                        }}
+                        className="btn-secondary"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-start justify-between mb-3">
+                      <h4 className="font-semibold text-gray-900">{command.draft.title}</h4>
+                      <button
+                        onClick={() => {
+                          setEventDraft(command.draft);
+                          setPreviousUIState('multiple_commands');
+                          setEditingCommandIndex(index);
+                          setUIState('editing');
+                        }}
+                        className="text-purple-600 hover:text-purple-700 text-sm font-medium"
+                        aria-label="Edit event details"
+                      >
+                        Edit
+                      </button>
+                    </div>
 
                 <div className="space-y-2 text-sm">
                   <div className="flex items-start gap-2">
@@ -177,25 +342,27 @@ export function MultipleCommands() {
                   )}
                 </div>
 
-                <div className="flex gap-2 mt-4">
-                  <button
-                    onClick={() => {
-                      setEventDraft(command.draft);
-                      setUIState('preview');
-                    }}
-                    className="btn-primary flex-1"
-                  >
-                    Confirm
-                  </button>
-                  <button
-                    onClick={() => {
-                      setExpandedIndex(null);
-                    }}
-                    className="btn-secondary"
-                  >
-                    Cancel
-                  </button>
-                </div>
+                    <div className="flex gap-2 mt-4">
+                      <button
+                        onClick={() => {
+                          setEventDraft(command.draft);
+                          setUIState('preview');
+                        }}
+                        className="btn-primary flex-1"
+                      >
+                        Confirm
+                      </button>
+                      <button
+                        onClick={() => {
+                          setExpandedIndex(null);
+                        }}
+                        className="btn-secondary"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
@@ -234,8 +401,9 @@ export function MultipleCommands() {
                 </button>
               </div>
             )}
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </div>
     );
   };
