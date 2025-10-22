@@ -145,13 +145,25 @@ export function EditForm() {
             onChange={(e) => setDuration(e.target.value)}
             className="input"
           >
+            <option value="5">5 minutes</option>
+            <option value="10">10 minutes</option>
             <option value="15">15 minutes</option>
+            <option value="20">20 minutes</option>
             <option value="30">30 minutes</option>
             <option value="45">45 minutes</option>
             <option value="60">1 hour</option>
+            <option value="75">1 hour 15 min</option>
             <option value="90">1.5 hours</option>
+            <option value="105">1 hour 45 min</option>
             <option value="120">2 hours</option>
+            <option value="150">2.5 hours</option>
             <option value="180">3 hours</option>
+            <option value="210">3.5 hours</option>
+            <option value="240">4 hours</option>
+            <option value="300">5 hours</option>
+            <option value="360">6 hours</option>
+            <option value="480">8 hours</option>
+            <option value="1440">All day (24 hours)</option>
           </select>
         </div>
 
